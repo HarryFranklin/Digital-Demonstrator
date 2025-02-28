@@ -4,78 +4,80 @@ using System.Linq;
 
 public class WireConnector : MonoBehaviour
 {
-    public List<Turbine> connectedTurbines; // Assign turbines in the Inspector
-    public LineRenderer lineRenderer;
+    public WindFarm windFarm;
     public LineRenderer circleRenderer;
-    private Vector3 centerPoint;
+    public List<LineRenderer> turbineLines = new List<LineRenderer>();
     public int circleSegments = 36;
     public float circleRadius = 0.5f;
-    public Color activeColor = Color.green;
-    public Color inactiveColor = Color.red;
+    public Color activeColour = Color.green;
+    public Color inactiveColour = Color.red;
+    public Color futureColour = Color.yellow;
 
     void Start()
     {
-        if (lineRenderer == null)
+        if (windFarm == null)
         {
-            lineRenderer = gameObject.AddComponent<LineRenderer>();
+            windFarm = GetComponent<WindFarm>();
         }
-        
+
         if (circleRenderer == null)
         {
             GameObject circleObject = new GameObject("CircleRenderer");
             circleRenderer = circleObject.AddComponent<LineRenderer>();
+            circleRenderer.material = new Material(Shader.Find("Sprites/Default"));
         }
-
-        lineRenderer.startWidth = 0.05f;
-        lineRenderer.endWidth = 0.05f;
-        lineRenderer.positionCount = connectedTurbines.Count * 2;
 
         circleRenderer.startWidth = 0.05f * 5;
         circleRenderer.endWidth = 0.05f * 5;
         circleRenderer.loop = true;
         circleRenderer.positionCount = circleSegments;
+
+        foreach (Turbine turbine in windFarm.turbines)
+        {
+            GameObject lineObj = new GameObject("TurbineLine");
+            LineRenderer line = lineObj.AddComponent<LineRenderer>();
+            line.material = new Material(Shader.Find("Sprites/Default")); // Fix for purple lines
+            line.startWidth = 0.05f;
+            line.endWidth = 0.05f;
+            turbineLines.Add(line);
+        }
     }
 
     void Update()
     {
-        UpdateWireConnections();
+        DrawConnections();
         DrawCircle();
     }
 
-    void UpdateWireConnections()
+    void DrawConnections()
     {
-        if (connectedTurbines == null || connectedTurbines.Count == 0) return;
+        if (windFarm.turbines.Count == 0) return;
 
-        // Calculate the center point
-        centerPoint = Vector3.zero;
-        foreach (Turbine turbine in connectedTurbines)
-        {
-            centerPoint += turbine.transform.position;
-        }
-        centerPoint /= connectedTurbines.Count;
+        Vector3 centerPoint = windFarm.GetCenterPoint();
 
-        // Update LineRenderer
-        lineRenderer.positionCount = connectedTurbines.Count * 2;
-        for (int i = 0; i < connectedTurbines.Count; i++)
+        for (int i = 0; i < windFarm.turbines.Count; i++)
         {
-            lineRenderer.SetPosition(i * 2, connectedTurbines[i].transform.position);
-            lineRenderer.SetPosition(i * 2 + 1, centerPoint);
-            
-            Color turbineColor = connectedTurbines[i].isOperational ? activeColor : inactiveColor;
-            lineRenderer.startColor = turbineColor;
-            lineRenderer.endColor = turbineColor;
+            Turbine turbine = windFarm.turbines[i];
+            if (turbine == null) continue;
+
+            LineRenderer line = turbineLines[i];
+            line.positionCount = 2;
+            line.SetPosition(0, turbine.transform.position);
+            line.SetPosition(1, centerPoint);
+
+            Color turbineColour = turbine.isOperational ? activeColour : inactiveColour;
+            line.startColor = turbineColour;
+            line.endColor = turbineColour;
         }
 
-        // Update Circle Color Based on Average Turbine Status
-        float activeCount = connectedTurbines.Count(t => t.isOperational);
-        float percentageActive = activeCount / connectedTurbines.Count;
-        circleRenderer.startColor = Color.Lerp(inactiveColor, activeColor, percentageActive);
-        circleRenderer.endColor = Color.Lerp(inactiveColor, activeColor, percentageActive);
+        UpdateCircleColour();
     }
 
     void DrawCircle()
     {
+        Vector3 centerPoint = windFarm.GetCenterPoint();
         Vector3[] circlePoints = new Vector3[circleSegments];
+
         for (int i = 0; i < circleSegments; i++)
         {
             float angle = i * 2 * Mathf.PI / circleSegments;
@@ -83,6 +85,19 @@ public class WireConnector : MonoBehaviour
             float z = Mathf.Sin(angle) * circleRadius;
             circlePoints[i] = new Vector3(centerPoint.x + x, centerPoint.y, centerPoint.z + z);
         }
+
         circleRenderer.SetPositions(circlePoints);
+    }
+
+    void UpdateCircleColour()
+    {
+        if (windFarm.turbines.Count == 0) return;
+
+        float activeCount = windFarm.turbines.Count(t => t.isOperational);
+        float percentageActive = activeCount / windFarm.turbines.Count;
+
+        Color mixedColour = Color.Lerp(inactiveColour, activeColour, percentageActive);
+        circleRenderer.startColor = mixedColour;
+        circleRenderer.endColor = mixedColour;
     }
 }

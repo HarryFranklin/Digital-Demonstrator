@@ -3,12 +3,11 @@ using System.Collections.Generic;
 
 public class WindFarm : MonoBehaviour
 {
-    public List<Turbine> turbines = new List<Turbine>(); // List of all turbines in the farm
+    public List<Turbine> turbines = new List<Turbine>(); // List of all turbines
     public float totalPowerOutput = 0f;
 
     void Start()
     {
-        // Automatically find all turbines in the farm if not assigned manually
         if (turbines.Count == 0)
         {
             turbines.AddRange(GetComponentsInChildren<Turbine>());
@@ -17,7 +16,6 @@ public class WindFarm : MonoBehaviour
 
     void Update()
     {
-        // Continuously update total power output
         totalPowerOutput = GetTotalPowerOutput();
     }
 
@@ -34,12 +32,15 @@ public class WindFarm : MonoBehaviour
         return totalPowerOutput;
     }
 
-    public void ToggleTurbine(int index, bool state)
+    public Vector3 GetCenterPoint()
     {
-        // Enable or disable a specific turbine by index
-        if (index >= 0 && index < turbines.Count)
+        if (turbines.Count == 0) return Vector3.zero;
+
+        Vector3 center = Vector3.zero;
+        foreach (Turbine turbine in turbines)
         {
-            turbines[index].isOperational = state;
+            center += turbine.transform.position;
         }
+        return center / turbines.Count;
     }
 }

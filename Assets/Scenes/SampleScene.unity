@@ -775,18 +775,14 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 90239f0efa4b07f43a97d8cf205f0399, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
-  connectedTurbines:
-  - {fileID: 1100677969375616452}
-  - {fileID: 366176774}
-  - {fileID: 1508552907}
-  - {fileID: 1913913169}
-  - {fileID: 2731149}
-  lineRenderer: {fileID: 1195360827}
+  windFarm: {fileID: 1195360825}
   circleRenderer: {fileID: 1469683035}
+  turbineLines: []
   circleSegments: 36
   circleRadius: 0.5
   activeColor: {r: 0, g: 1, b: 0, a: 1}
   inactiveColor: {r: 1, g: 0, b: 0, a: 1}
+  futureColor: {r: 1, g: 0.92156863, b: 0.015686275, a: 1}
 --- !u!1 &1439569850
 GameObject:
   m_ObjectHideFlags: 0
@@ -1313,7 +1309,7 @@ Transform:
   m_GameObject: {fileID: 2145937288}
   serializedVersion: 2
   m_LocalRotation: {x: 0, y: 0, z: 0, w: 1}
-  m_LocalPosition: {x: 0, y: 0, z: 0}
+  m_LocalPosition: {x: 0, y: -0.15, z: 0}
   m_LocalScale: {x: 5, y: 5, z: 5}
   m_ConstrainProportionsScale: 0
   m_Children: []

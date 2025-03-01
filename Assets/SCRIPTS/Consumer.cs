@@ -1,6 +1,6 @@
 using UnityEngine;
 
-public class Consumer : MonoBehaviour
+public class Consumer : ElectricalComponent
 {
     /**
     Turbine class is the source of the power system.  One or many turbines make up a wind farm.
@@ -15,16 +15,14 @@ public class Consumer : MonoBehaviour
 
     // I/O
     public PowerGrid inputGrid; // One grid per consumer.
-    public float outputConsumption; // Float variable for power consumption of this consumer.
+    public float outputConsumption = 20f; // Float variable for power consumption of this consumer.
     // I/O
-
-    void Start()
-    {
-        
-    }
 
     void Update()
     {
-        
+        if (inputPower < outputConsumption)
+        {
+            Debug.LogWarning($"Consumer {gameObject.name} has power shortage!");
+        }
     }
 }

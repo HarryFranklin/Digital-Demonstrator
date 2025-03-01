@@ -1,6 +1,6 @@
 using UnityEngine;
 
-public class Inverter : MonoBehaviour
+public class Inverter : ElectricalComponent
 {
     /**
     Turbine class is the source of the power system.  One or many turbines make up a wind farm.
@@ -19,13 +19,12 @@ public class Inverter : MonoBehaviour
     public Transformer outputTransformer; // One transformer per inverter.
     // I/O
 
-    void Start()
-    {
-        
-    }
-
     void Update()
     {
-        
+        if (outputTransformer != null)
+        {
+            outputPower = inputPower; // No conversion loss for now
+            outputTransformer.ReceivePower(outputPower);
+        }
     }
 }

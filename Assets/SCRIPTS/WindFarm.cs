@@ -20,32 +20,20 @@ public class WindFarm : MonoBehaviour
     public Inverter inverter; // One inverter per farm.
     // I/O
 
-    public float totalPowerOutput = 0f;
-
-    void Start()
-    {
-        if (inputTurbines.Count == 0)
-        {
-            inputTurbines.AddRange(GetComponentsInChildren<Turbine>());
-        }
-    }
+    public float totalPowerOutput;
 
     void Update()
     {
-        totalPowerOutput = GetTotalPowerOutput();
-    }
-
-    public float GetTotalPowerOutput()
-    {
-        float totalPowerOutput = 0;
+        totalPowerOutput = 0;
         foreach (Turbine turbine in inputTurbines)
         {
-            if (turbine != null && turbine.isOperational)
+            if (turbine.isOperational)
             {
                 totalPowerOutput += turbine.GetPowerOutput();
             }
         }
-        return totalPowerOutput;
+
+        inverter.ReceivePower(totalPowerOutput);
     }
 
     public Vector3 GetCenterPoint()

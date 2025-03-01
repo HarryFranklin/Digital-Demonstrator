@@ -12,6 +12,7 @@ public class WireConnector : MonoBehaviour
     public Color activeColour = Color.green;
     public Color inactiveColour = Color.red;
     public Color futureColour = Color.yellow;
+    private float yOffset = 0.5f; // Offset to raise the lines
 
     void Start()
     {
@@ -32,7 +33,7 @@ public class WireConnector : MonoBehaviour
         circleRenderer.loop = true;
         circleRenderer.positionCount = circleSegments;
 
-        foreach (Turbine turbine in windFarm.turbines)
+        foreach (Turbine turbine in windFarm.inputTurbines)
         {
             GameObject lineObj = new GameObject("TurbineLine");
             LineRenderer line = lineObj.AddComponent<LineRenderer>();
@@ -51,18 +52,23 @@ public class WireConnector : MonoBehaviour
 
     void DrawConnections()
     {
-        if (windFarm.turbines.Count == 0) return;
+        if (windFarm.inputTurbines.Count == 0) return;
 
         Vector3 centerPoint = windFarm.GetCenterPoint();
+        centerPoint.y += yOffset; // Raise center point by yOffset
 
-        for (int i = 0; i < windFarm.turbines.Count; i++)
+        for (int i = 0; i < windFarm.inputTurbines.Count; i++)
         {
-            Turbine turbine = windFarm.turbines[i];
+            Turbine turbine = windFarm.inputTurbines[i];
             if (turbine == null) continue;
 
             LineRenderer line = turbineLines[i];
             line.positionCount = 2;
-            line.SetPosition(0, turbine.transform.position);
+
+            Vector3 start = turbine.transform.position;
+            start.y += yOffset; // Raise turbine connection point
+
+            line.SetPosition(0, start);
             line.SetPosition(1, centerPoint);
 
             Color turbineColour = turbine.isOperational ? activeColour : inactiveColour;
@@ -76,6 +82,7 @@ public class WireConnector : MonoBehaviour
     void DrawCircle()
     {
         Vector3 centerPoint = windFarm.GetCenterPoint();
+        centerPoint.y += yOffset; // Raise circle position by yOffset
         Vector3[] circlePoints = new Vector3[circleSegments];
 
         for (int i = 0; i < circleSegments; i++)
@@ -91,10 +98,10 @@ public class WireConnector : MonoBehaviour
 
     void UpdateCircleColour()
     {
-        if (windFarm.turbines.Count == 0) return;
+        if (windFarm.inputTurbines.Count == 0) return;
 
-        float activeCount = windFarm.turbines.Count(t => t.isOperational);
-        float percentageActive = activeCount / windFarm.turbines.Count;
+        float activeCount = windFarm.inputTurbines.Count(t => t.isOperational);
+        float percentageActive = activeCount / windFarm.inputTurbines.Count;
 
         Color mixedColour = Color.Lerp(inactiveColour, activeColour, percentageActive);
         circleRenderer.startColor = mixedColour;

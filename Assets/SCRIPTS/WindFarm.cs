@@ -1,7 +1,7 @@
 using UnityEngine;
 using System.Collections.Generic;
 
-public class WindFarm : MonoBehaviour
+public class WindFarm : ElectricalComponent
 {
     /**
     Turbine class is the source of the power system.  One or many turbines make up a wind farm.
@@ -20,20 +20,18 @@ public class WindFarm : MonoBehaviour
     public Inverter inverter; // One inverter per farm.
     // I/O
 
-    public float totalPowerOutput;
-
     void Update()
     {
-        totalPowerOutput = 0;
+        outputPower = 0;
         foreach (Turbine turbine in inputTurbines)
         {
             if (turbine.isOperational)
             {
-                totalPowerOutput += turbine.GetPowerOutput();
+                outputPower += turbine.GetPowerOutput();
             }
         }
 
-        inverter.ReceivePower(totalPowerOutput);
+        inverter.ReceivePower(outputPower);
     }
 
     public Vector3 GetCenterPoint()

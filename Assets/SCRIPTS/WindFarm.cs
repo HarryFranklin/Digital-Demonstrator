@@ -20,43 +20,25 @@ public class WindFarm : ElectricalComponent
     public Inverter inverter; // One inverter per farm.
     // I/O
 
-    [Header("Connected Turbines")]
-    [SerializeField] private List<float> turbinePowerOutputs = new List<float>(); // Show turbine power
+    public float totalPowerOutput;
 
     void Update()
     {
-        outputPower = 0;
-        turbinePowerOutputs.Clear();  // Reset the list
-
+        totalPowerOutput = 0;
         foreach (Turbine turbine in inputTurbines)
         {
             if (turbine.isOperational)
             {
-                float power = turbine.GetPowerOutput();
-                outputPower += power;
-                turbinePowerOutputs.Add(power); // Store each turbine's power for visibility
+                totalPowerOutput += turbine.GetPowerOutput();
             }
         }
 
-        inverter.ReceivePower(outputPower);
-    }
-
-    protected override void OnDrawGizmos()
-    {
-        base.OnDrawGizmos();
-        Gizmos.color = Color.green;
-        foreach (Turbine turbine in inputTurbines)
-        {
-            if (turbine != null)
-            {
-                Gizmos.DrawLine(transform.position, turbine.transform.position);
-            }
-        }
+        inverter.ReceivePower(totalPowerOutput);
     }
 
     public Vector3 GetCenterPoint()
     {
-        if (inputTurbines.Count == 0) return transform.position;
+        if (inputTurbines.Count == 0) return Vector3.zero;
 
         Vector3 center = Vector3.zero;
         foreach (Turbine turbine in inputTurbines)

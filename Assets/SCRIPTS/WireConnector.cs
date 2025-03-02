@@ -56,7 +56,7 @@ public class WireConnector : MonoBehaviour
         Vector3 centerPoint = windFarm.GetCenterPoint();
         centerPoint.y += yOffset;
 
-        float maxPower = windFarm.outputPower > 0 ? windFarm.outputPower : 1; // Prevent division errors
+        float maxPower = windFarm.totalPowerOutput > 0 ? windFarm.totalPowerOutput : 1; // Prevent division errors
 
         foreach (Turbine turbine in windFarm.inputTurbines)
         {

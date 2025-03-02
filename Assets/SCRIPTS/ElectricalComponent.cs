@@ -1,5 +1,3 @@
-using UnityEngine;
-
 public abstract class ElectricalComponent : MonoBehaviour
 {
     protected float inputPower = 0f;

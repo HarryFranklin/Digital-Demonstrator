@@ -1,7 +1,7 @@
 using UnityEngine;
 using System.Collections.Generic;
 
-public class WindFarm : ElectricalComponent
+public class WindFarm : MonoBehaviour
 {
     /**
     Turbine class is the source of the power system.  One or many turbines make up a wind farm.

@@ -10,8 +10,7 @@ public class WireConnector : MonoBehaviour
     public float circleRadius = 0.5f;
     public Color activeColour = Color.green;
     public Color inactiveColour = Color.red;
-    public Color futureColour = Color.yellow;
-    private float yOffset = 0.5f; // Offset to raise the lines
+    private float yOffset = 0.5f; 
 
     void Start()
     {
@@ -34,17 +33,9 @@ public class WireConnector : MonoBehaviour
 
         foreach (Turbine turbine in windFarm.inputTurbines)
         {
-            Transform lineHolder = turbine.transform.Find("LineRendererHolder");
-            if (lineHolder == null)
+            if (turbine.GetComponent<LineRenderer>() == null)
             {
-                GameObject holderObj = new GameObject("LineRendererHolder");
-                holderObj.transform.parent = turbine.transform;
-                lineHolder = holderObj.transform;
-            }
-
-            if (lineHolder.GetComponent<LineRenderer>() == null)
-            {
-                LineRenderer line = lineHolder.gameObject.AddComponent<LineRenderer>();
+                LineRenderer line = turbine.gameObject.AddComponent<LineRenderer>();
                 line.material = new Material(Shader.Find("Sprites/Default"));
                 line.startWidth = 0.05f;
                 line.endWidth = 0.05f;
@@ -55,7 +46,7 @@ public class WireConnector : MonoBehaviour
     void Update()
     {
         DrawConnections();
-        DrawCircle();
+        UpdateCircleColour();
     }
 
     void DrawConnections()
@@ -65,27 +56,13 @@ public class WireConnector : MonoBehaviour
         Vector3 centerPoint = windFarm.GetCenterPoint();
         centerPoint.y += yOffset;
 
+        float maxPower = windFarm.totalPowerOutput > 0 ? windFarm.totalPowerOutput : 1; // Prevent division errors
+
         foreach (Turbine turbine in windFarm.inputTurbines)
         {
             if (turbine == null) continue;
 
-            turbine.ReceivePower(turbine.windSpeed); // Input power comes from wind speed
-
-            if (turbine.isOperational && turbine.rotationPoint != null)
-            {
-                float rotationSpeed = Mathf.Clamp(turbine.windSpeed, 0, turbine.maxSpeed);
-                turbine.rotationPoint.transform.RotateAround(turbine.pivot.transform.position, Vector3.forward, rotationSpeed * Time.deltaTime * 10);
-                turbine.outputPower = turbine.GetPowerOutput();
-            }
-            else 
-            {
-                turbine.outputPower = 0;
-            }
-
-            Transform lineHolder = turbine.transform.Find("LineRendererHolder");
-            if (lineHolder == null) continue;
-
-            LineRenderer line = lineHolder.GetComponent<LineRenderer>();
+            LineRenderer line = turbine.GetComponent<LineRenderer>();
             line.positionCount = 2;
 
             Vector3 start = turbine.transform.position;
@@ -94,26 +71,31 @@ public class WireConnector : MonoBehaviour
             line.SetPosition(0, start);
             line.SetPosition(1, centerPoint);
 
-            float powerRatio = turbine.GetPowerOutput() / Mathf.Max(1, windFarm.totalPowerOutput);
+            float powerRatio = Mathf.Clamp01(turbine.GetPowerOutput() / maxPower); // Normalize power ratio
             line.startColor = Color.Lerp(inactiveColour, activeColour, powerRatio);
             line.endColor = Color.Lerp(inactiveColour, activeColour, powerRatio);
         }
     }
 
-    void DrawCircle()
+    void UpdateCircleColour()
     {
-        Vector3 centerPoint = windFarm.GetCenterPoint();
-        centerPoint.y += yOffset;
-        Vector3[] circlePoints = new Vector3[circleSegments];
+        if (windFarm.inputTurbines.Count == 0) return;
 
-        for (int i = 0; i < circleSegments; i++)
+        float totalPower = 0f;
+        float activePower = 0f;
+
+        foreach (Turbine turbine in windFarm.inputTurbines)
         {
-            float angle = i * 2 * Mathf.PI / circleSegments;
-            float x = Mathf.Cos(angle) * circleRadius;
-            float z = Mathf.Sin(angle) * circleRadius;
-            circlePoints[i] = new Vector3(centerPoint.x + x, centerPoint.y, centerPoint.z + z);
+            if (turbine.isOperational)
+            {
+                activePower += turbine.GetPowerOutput();
+            }
+            totalPower += turbine.GetPowerOutput();
         }
 
-        circleRenderer.SetPositions(circlePoints);
+        float powerRatio = totalPower > 0 ? activePower / totalPower : 0f;
+        Color mixedColour = Color.Lerp(inactiveColour, activeColour, powerRatio);
+        circleRenderer.startColor = mixedColour;
+        circleRenderer.endColor = mixedColour;
     }
 }

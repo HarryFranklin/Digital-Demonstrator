@@ -1,3 +1,6 @@
+using UnityEngine;
+using System.Collections.Generic;
+
 public abstract class ElectricalComponent : MonoBehaviour
 {
     protected float inputPower = 0f;

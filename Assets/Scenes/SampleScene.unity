@@ -159,6 +159,10 @@ PrefabInstance:
       value: 150
       objectReference: {fileID: 0}
     - target: {fileID: 7271659090622779660, guid: a5f78faffb30cba4584331f60c8d307a, type: 3}
+      propertyPath: windSpeed
+      value: 2
+      objectReference: {fileID: 0}
+    - target: {fileID: 7271659090622779660, guid: a5f78faffb30cba4584331f60c8d307a, type: 3}
       propertyPath: outputWindFarm
       value: 
       objectReference: {fileID: 1195360825}
@@ -176,7 +180,7 @@ PrefabInstance:
       objectReference: {fileID: 0}
     - target: {fileID: 8990682334151784713, guid: a5f78faffb30cba4584331f60c8d307a, type: 3}
       propertyPath: m_LocalPosition.z
-      value: -15.89
+      value: -20.850582
       objectReference: {fileID: 0}
     - target: {fileID: 8990682334151784713, guid: a5f78faffb30cba4584331f60c8d307a, type: 3}
       propertyPath: m_LocalRotation.w
@@ -485,6 +489,10 @@ PrefabInstance:
       value: 30
       objectReference: {fileID: 0}
     - target: {fileID: 7271659090622779660, guid: a5f78faffb30cba4584331f60c8d307a, type: 3}
+      propertyPath: windSpeed
+      value: 2
+      objectReference: {fileID: 0}
+    - target: {fileID: 7271659090622779660, guid: a5f78faffb30cba4584331f60c8d307a, type: 3}
       propertyPath: isOperational
       value: 1
       objectReference: {fileID: 0}
@@ -506,7 +514,7 @@ PrefabInstance:
       objectReference: {fileID: 0}
     - target: {fileID: 8990682334151784713, guid: a5f78faffb30cba4584331f60c8d307a, type: 3}
       propertyPath: m_LocalPosition.z
-      value: -6.27
+      value: -11.230581
       objectReference: {fileID: 0}
     - target: {fileID: 8990682334151784713, guid: a5f78faffb30cba4584331f60c8d307a, type: 3}
       propertyPath: m_LocalRotation.w
@@ -758,6 +766,7 @@ MonoBehaviour:
   outputBatteries:
   - {fileID: 1080049302}
   outputGrid: {fileID: 1127377864}
+  inputPower: 0
 --- !u!65 &973956027
 BoxCollider:
   m_ObjectHideFlags: 0
@@ -841,7 +850,7 @@ Transform:
   m_GameObject: {fileID: 973956025}
   serializedVersion: 2
   m_LocalRotation: {x: 0, y: 0, z: 0, w: 1}
-  m_LocalPosition: {x: -8.66, y: 2.25, z: 10.1}
+  m_LocalPosition: {x: -17.02, y: 2.25, z: -0.79}
   m_LocalScale: {x: 1.5, y: 4.5, z: 1.5}
   m_ConstrainProportionsScale: 1
   m_Children: []
@@ -879,9 +888,10 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 01ae5cd7dc90bab4b9dc1b090c28a84c, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
+  capacity: 100
+  storedPower: 0
   inputTransformer: {fileID: 973956026}
   outputGrid: {fileID: 1127377864}
-  capacity: 100
 --- !u!65 &1080049303
 BoxCollider:
   m_ObjectHideFlags: 0
@@ -965,7 +975,7 @@ Transform:
   m_GameObject: {fileID: 1080049301}
   serializedVersion: 2
   m_LocalRotation: {x: 0, y: 0, z: 0, w: 1}
-  m_LocalPosition: {x: -15.39, y: 1, z: 0.59}
+  m_LocalPosition: {x: -5.06, y: 1, z: 2.95}
   m_LocalScale: {x: 4, y: 1.5, z: 4}
   m_ConstrainProportionsScale: 0
   m_Children: []
@@ -1004,9 +1014,8 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: 
   inputTransformer: {fileID: 973956026}
-  inputBattery: {fileID: 1080049302}
-  outputConsumers:
-  - {fileID: 1134539488}
+  backupBattery: {fileID: 1080049302}
+  consumers: []
 --- !u!65 &1127377865
 BoxCollider:
   m_ObjectHideFlags: 0
@@ -1183,7 +1192,6 @@ MonoBehaviour:
   - {fileID: 789938371}
   - {fileID: 1342209187}
   inverter: {fileID: 1426751281}
-  totalPowerOutput: 0
 --- !u!4 &1195360826
 Transform:
   m_ObjectHideFlags: 0
@@ -1193,7 +1201,7 @@ Transform:
   m_GameObject: {fileID: 1195360824}
   serializedVersion: 2
   m_LocalRotation: {x: 0, y: 0, z: 0, w: 1}
-  m_LocalPosition: {x: 2.3111932, y: 4.6930037, z: -1.9349751}
+  m_LocalPosition: {x: 2.3111932, y: 4.6930037, z: -6.895556}
   m_LocalScale: {x: 1, y: 1, z: 1}
   m_ConstrainProportionsScale: 0
   m_Children:
@@ -1452,7 +1460,7 @@ Transform:
   m_GameObject: {fileID: 1426751276}
   serializedVersion: 2
   m_LocalRotation: {x: 0, y: 0, z: 0, w: 1}
-  m_LocalPosition: {x: -6, y: 1, z: 3}
+  m_LocalPosition: {x: -8.32, y: 1, z: -5.42}
   m_LocalScale: {x: 2, y: 2, z: 2}
   m_ConstrainProportionsScale: 1
   m_Children: []
@@ -1748,6 +1756,10 @@ PrefabInstance:
       value: 50
       objectReference: {fileID: 0}
     - target: {fileID: 7271659090622779660, guid: a5f78faffb30cba4584331f60c8d307a, type: 3}
+      propertyPath: windSpeed
+      value: 2
+      objectReference: {fileID: 0}
+    - target: {fileID: 7271659090622779660, guid: a5f78faffb30cba4584331f60c8d307a, type: 3}
       propertyPath: outputWindFarm
       value: 
       objectReference: {fileID: 1195360825}
@@ -1765,7 +1777,7 @@ PrefabInstance:
       objectReference: {fileID: 0}
     - target: {fileID: 8990682334151784713, guid: a5f78faffb30cba4584331f60c8d307a, type: 3}
       propertyPath: m_LocalPosition.z
-      value: -11.38
+      value: -16.34058
       objectReference: {fileID: 0}
     - target: {fileID: 8990682334151784713, guid: a5f78faffb30cba4584331f60c8d307a, type: 3}
       propertyPath: m_LocalRotation.w
@@ -1969,6 +1981,10 @@ PrefabInstance:
       value: 70
       objectReference: {fileID: 0}
     - target: {fileID: 7271659090622779660, guid: a5f78faffb30cba4584331f60c8d307a, type: 3}
+      propertyPath: windSpeed
+      value: 2
+      objectReference: {fileID: 0}
+    - target: {fileID: 7271659090622779660, guid: a5f78faffb30cba4584331f60c8d307a, type: 3}
       propertyPath: outputWindFarm
       value: 
       objectReference: {fileID: 1195360825}
@@ -1986,7 +2002,7 @@ PrefabInstance:
       objectReference: {fileID: 0}
     - target: {fileID: 8990682334151784713, guid: a5f78faffb30cba4584331f60c8d307a, type: 3}
       propertyPath: m_LocalPosition.z
-      value: -5.98
+      value: -10.94058
       objectReference: {fileID: 0}
     - target: {fileID: 8990682334151784713, guid: a5f78faffb30cba4584331f60c8d307a, type: 3}
       propertyPath: m_LocalRotation.w
@@ -2258,6 +2274,10 @@ PrefabInstance:
     m_TransformParent: {fileID: 0}
     m_Modifications:
     - target: {fileID: 7271659090622779660, guid: a5f78faffb30cba4584331f60c8d307a, type: 3}
+      propertyPath: windSpeed
+      value: 2
+      objectReference: {fileID: 0}
+    - target: {fileID: 7271659090622779660, guid: a5f78faffb30cba4584331f60c8d307a, type: 3}
       propertyPath: outputWindFarm
       value: 
       objectReference: {fileID: 1195360825}
@@ -2275,7 +2295,7 @@ PrefabInstance:
       objectReference: {fileID: 0}
     - target: {fileID: 8990682334151784713, guid: a5f78faffb30cba4584331f60c8d307a, type: 3}
       propertyPath: m_LocalPosition.z
-      value: 0
+      value: -4.960581
       objectReference: {fileID: 0}
     - target: {fileID: 8990682334151784713, guid: a5f78faffb30cba4584331f60c8d307a, type: 3}
       propertyPath: m_LocalRotation.w

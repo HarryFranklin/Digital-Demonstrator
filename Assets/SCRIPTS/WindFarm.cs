@@ -4,36 +4,36 @@ using System.Collections.Generic;
 public class WindFarm : MonoBehaviour
 {
     /**
-    Turbine class is the source of the power system.  One or many turbines make up a wind farm.
-    One or many wind farms send power to an inverter, then to a transformer.
-    If power demand is too low, excess power is sent from the transformer to a battery, then to the grid as required.
-    If demand is sufficient, power is sent from transformer to the grid.
-    If the source power is too low, the battery is discharged to make up the difference.
-    Power is sent from the grid to the consumer.
-
     Current stage: WIND FARM
     Next stage: INVERTER
     **/
 
     // I/O
-    public List<Turbine> inputTurbines = new List<Turbine>(); // One or many turbines per farm.
-    public Inverter inverter; // One inverter per farm.
+    public List<Turbine> inputTurbines = new List<Turbine>();
+    public Inverter inverter;
     // I/O
 
-    public float totalPowerOutput;
+    private float totalPowerOutput;
 
     void Update()
     {
-        totalPowerOutput = 0;
+        totalPowerOutput = CalculateTotalPower();
+        inverter.ReceivePower(totalPowerOutput);
+    }
+
+    private float CalculateTotalPower()
+    {
+        float total = 0;
         foreach (Turbine turbine in inputTurbines)
         {
-            if (turbine.isOperational)
-            {
-                totalPowerOutput += turbine.GetPowerOutput();
-            }
+            total += turbine.GetPowerOutput();
         }
+        return total;
+    }
 
-        inverter.ReceivePower(totalPowerOutput);
+    public void ReceivePower(float power)
+    {
+        totalPowerOutput += power;
     }
 
     public Vector3 GetCenterPoint()

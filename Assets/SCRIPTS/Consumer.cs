@@ -7,17 +7,13 @@ public class Consumer : MonoBehaviour
     **/
 
     // I/O
-    public PowerGrid inputGrid; // One grid per consumer.
-    public float outputConsumption = 20f; // Float variable for power consumption of this consumer.
+    public PowerGrid inputGrid;  // Reference to the grid this consumer is connected to
+    public float powerInput;  // Amount of power this consumer receives from the grid
+    public float powerConsumption = 20f;  // Amount of power this consumer requires
     // I/O
 
-    public void ReceivePower(float power)
+    void Update()
     {
-        Debug.Log($"Consumer received {power} units of power.");
-    }
-
-    public float GetPowerDemand()
-    {
-        return outputConsumption;
+        // Functionality added later
     }
 }

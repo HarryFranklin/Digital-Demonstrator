@@ -1,36 +1,38 @@
 using UnityEngine;
-using System.Collections.Generic;
 
 public class Turbine : MonoBehaviour
 {
-    /**
-    Current stage: TURBINE
-    Next stage: WIND FARM
-    **/
-
     // I/O
     public WindFarm outputWindFarm;
     // I/O
 
-    public float windSpeed = 10f;
-    public float maxSpeed = 20f;
-    public bool isOperational = true;
+    public float windSpeed = 10f; // Wind speed for simulation
+    public float maxSpeed = 20f; // Max rotation speed
+    public bool isOperational = true; // Can be toggled (e.g., for attacks)
 
+    // Rotation functionality
     public GameObject rotationPoint;
     public GameObject pivot;
 
-    private float powerOutput;
+    // Power
+    public float powerOutput;
 
     void Update()
     {
         if (isOperational)
         {
             RotateBlades();
-            powerOutput = CalculatePowerOutput(windSpeed);
+            powerOutput = windSpeed; // Directly use wind speed as power output
         }
         else
         {
-            powerOutput = 0f;
+            powerOutput = 0f; // No power if turbine is offline
+        }
+
+        // Send updated power to wind farm
+        if (outputWindFarm != null)
+        {
+            outputWindFarm.ReceivePower(powerOutput);
         }
     }
 
@@ -41,15 +43,5 @@ public class Turbine : MonoBehaviour
             float rotationSpeed = Mathf.Clamp(windSpeed, 0, maxSpeed);
             rotationPoint.transform.RotateAround(pivot.transform.position, Vector3.forward, rotationSpeed * Time.deltaTime * 10);
         }
-    }
-
-    private float CalculatePowerOutput(float speed)
-    {
-        return speed;
-    }
-
-    public float GetPowerOutput()
-    {
-        return powerOutput;
     }
 }

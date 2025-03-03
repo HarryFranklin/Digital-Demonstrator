@@ -766,7 +766,7 @@ MonoBehaviour:
   outputBatteries:
   - {fileID: 1080049302}
   outputGrid: {fileID: 1127377864}
-  inputPower: 0
+  powerInput: 0
 --- !u!65 &973956027
 BoxCollider:
   m_ObjectHideFlags: 0
@@ -888,10 +888,11 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 01ae5cd7dc90bab4b9dc1b090c28a84c, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
-  capacity: 100
-  storedPower: 0
   inputTransformer: {fileID: 973956026}
   outputGrid: {fileID: 1127377864}
+  capacity: 100
+  storedPower: 0
+  powerInput: 0
 --- !u!65 &1080049303
 BoxCollider:
   m_ObjectHideFlags: 0
@@ -1013,9 +1014,9 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 1ca27a5612d319743a6ca5e4839452d6, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
-  inputTransformer: {fileID: 973956026}
-  backupBattery: {fileID: 1080049302}
-  consumers: []
+  consumers:
+  - {fileID: 1134539488}
+  powerInput: 0
 --- !u!65 &1127377865
 BoxCollider:
   m_ObjectHideFlags: 0
@@ -1153,7 +1154,8 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: 
   inputGrid: {fileID: 1127377864}
-  outputConsumption: 10
+  powerInput: 20
+  powerConsumption: 0
 --- !u!1 &1195360824
 GameObject:
   m_ObjectHideFlags: 0
@@ -1480,6 +1482,7 @@ MonoBehaviour:
   m_EditorClassIdentifier: 
   inputFarm: {fileID: 1195360825}
   outputTransformer: {fileID: 973956026}
+  powerInput: 0
 --- !u!1 &1439569850
 GameObject:
   m_ObjectHideFlags: 0

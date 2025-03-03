@@ -7,51 +7,35 @@ public class Battery : MonoBehaviour
     Next stage: GRID
     **/
 
-    public float capacity = 100f;
-    public float storedPower = 0f;
+    // I/O
     public Transformer inputTransformer;
     public PowerGrid outputGrid;
+    // I/O
 
-    public float Charge(float power)
-    {
-        float availableSpace = capacity - storedPower;
-        float powerToStore = Mathf.Min(availableSpace, power);
-        storedPower += powerToStore;
+    // Battery Information
+    public float capacity = 1000f;  // Battery capacity
+    public float storedPower = 0f;  // Power currently stored in the battery
 
-        if (power > powerToStore)
-        {
-            Debug.Log("Battery full, excess power available.");
-        }
-
-        return powerToStore;
-    }
-
-    public float Discharge(float neededPower)
-    {
-        float powerToProvide = Mathf.Min(storedPower, neededPower);
-        storedPower -= powerToProvide;
-        return powerToProvide;
-    }
+    public float powerInput;
 
     void Update()
     {
-        float gridDemand = outputGrid.GetPowerDemand();
-        float availablePower = inputTransformer.inputPower;
-
-        if (availablePower < gridDemand)
+        if (storedPower < capacity)
         {
-            float shortfall = gridDemand - availablePower;
-            float suppliedPower = Discharge(shortfall);
-            outputGrid.ReceivePower(availablePower + suppliedPower);
+            storedPower += powerInput;
+            if (storedPower > capacity)
+            {
+                storedPower = capacity;
+            }
         }
         else
         {
-            outputGrid.ReceivePower(availablePower);
-            float excessPower = availablePower - gridDemand;
-            if (excessPower > 0)
-            {
-                Charge(excessPower);
-            }
+            outputGrid.powerInput = powerInput;
         }
+    }
+
+    public bool isFull()
+    {
+        return (storedPower >= capacity);
     }
 }

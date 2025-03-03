@@ -8,24 +8,14 @@ public class Inverter : MonoBehaviour
     **/
 
     // I/O
-    public WindFarm inputFarm;
-    public Transformer outputTransformer;
+    public WindFarm inputFarm;  // Reference to the input wind farm
+    public Transformer outputTransformer;  // Reference to the next stage (transformer)
     // I/O
 
-    private float inputPower;
-    private float outputPower;
-
-    public void ReceivePower(float power)
-    {
-        inputPower = power;
-    }
+    public float powerInput;
 
     void Update()
     {
-        if (outputTransformer != null)
-        {
-            outputPower = inputPower; // No conversion loss for now
-            outputTransformer.ReceivePower(outputPower);
-        }
+        outputTransformer.powerInput = powerInput;
     }
 }

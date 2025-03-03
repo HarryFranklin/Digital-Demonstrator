@@ -3,39 +3,36 @@ using System.Collections.Generic;
 
 public class WindFarm : MonoBehaviour
 {
-    /**
-    Current stage: WIND FARM
-    Next stage: INVERTER
-    **/
-
     // I/O
     public List<Turbine> inputTurbines = new List<Turbine>();
-    public Inverter inverter;
+    public Inverter inverter;  // Reference to inverter (next stage)
     // I/O
 
-    private float totalPowerOutput;
+    private float totalPowerInput;
 
     void Update()
     {
-        totalPowerOutput = CalculateTotalPower();
-        inverter.ReceivePower(totalPowerOutput);
-    }
-
-    private float CalculateTotalPower()
-    {
-        float total = 0;
+        // Calculate total power input from turbines
+        totalPowerInput = 0f;
         foreach (Turbine turbine in inputTurbines)
         {
-            total += turbine.GetPowerOutput();
+            totalPowerInput += turbine.powerOutput; // Directly use turbine's powerOutput
         }
-        return total;
+
+        // Send power to inverter if available
+        if (inverter != null)
+        {
+            inverter.powerInput = totalPowerInput;
+        }
     }
 
+    // Power receiving method, can be extended for managing power more efficiently
     public void ReceivePower(float power)
     {
-        totalPowerOutput += power;
+        totalPowerInput += power; // Accumulate power from turbines or other sources
     }
 
+    // Method to visualise wind farm centre (average position of turbines)
     public Vector3 GetCenterPoint()
     {
         if (inputTurbines.Count == 0) return Vector3.zero;

@@ -3,42 +3,36 @@ using System.Collections.Generic;
 
 public class PowerGrid : MonoBehaviour
 {
-    public Transformer inputTransformer;
-    public Battery backupBattery;
-    public List<Consumer> consumers;
-    private float totalPower;
+    /**
+    Current stage: GRID
+    Next stage: CONSUMER
+    **/
 
-    public void ReceivePower(float power)
-    {
-        totalPower += power;
-    }
+    // I/O
+    public List<Consumer> consumers;  // List of consumers connected to this grid
+    // I/O
 
-    public float GetPowerDemand()
-    {
-        float demand = 0;
-        foreach (var consumer in consumers)
-        {
-            demand += consumer.GetPowerDemand();
-        }
-        return demand;
-    }
+    public float powerInput;  // Total power available from the grid
 
     void Update()
     {
-        float demand = GetPowerDemand();
-        float availablePower = totalPower;
-
-        if (availablePower < demand && backupBattery != null)
+        float totalConsumption = 0f;
+        foreach (Consumer consumer in consumers)
         {
-            float shortfall = demand - availablePower;
-            availablePower += backupBattery.Discharge(shortfall);
+            totalConsumption += consumer.powerConsumption;  // Sum all consumers' power consumption needs
         }
 
-        foreach (var consumer in consumers)
+        // Distribute power based on each consumer's consumption needs
+        foreach (Consumer consumer in consumers)
         {
-            consumer.ReceivePower(availablePower / consumers.Count);
+            if (totalConsumption > 0f) // Avoid division by zero
+            {
+                consumer.powerInput = (consumer.powerConsumption / totalConsumption) * powerInput;
+            }
+            else
+            {
+                consumer.powerInput = 0f;  // No power if no consumption
+            }
         }
-
-        totalPower = 0;
     }
 }

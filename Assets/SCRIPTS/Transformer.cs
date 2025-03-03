@@ -9,36 +9,28 @@ public class Transformer : MonoBehaviour
     **/
 
     // I/O
-    public Inverter inputInverter;
-    public List<Battery> outputBatteries = new List<Battery>();
-    public PowerGrid outputGrid;
+    public Inverter inputInverter;  // Reference to the input inverter
+    public List<Battery> outputBatteries = new List<Battery>();  // List of batteries to store excess power
+    public PowerGrid outputGrid;  // Reference to the output grid
     // I/O
 
-    public float inputPower;
-
-    public void ReceivePower(float power)
-    {
-        inputPower = power;
-    }
+    public float powerInput;
 
     void Update()
     {
-        float remainingPower = inputPower;
-
-        // Charge batteries first
+        // Only functionality for one battery for now
         foreach (Battery battery in outputBatteries)
-        {
-            if (remainingPower > 0)
+        {  
+            // If battery isn't full, send it power
+            if (battery.isFull() == false)
             {
-                float stored = battery.Charge(remainingPower / outputBatteries.Count);
-                remainingPower -= stored;
+                battery.powerInput = powerInput;
             }
-        }
-
-        // Send any remaining power to the grid
-        if (remainingPower > 0 && outputGrid != null)
-        {
-            outputGrid.ReceivePower(remainingPower);
+            else
+            {
+                battery.powerInput = 0;
+                outputGrid.powerInput = powerInput;
+            }
         }
     }
 }

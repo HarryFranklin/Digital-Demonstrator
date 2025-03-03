@@ -159,6 +159,10 @@ PrefabInstance:
       value: 150
       objectReference: {fileID: 0}
     - target: {fileID: 7271659090622779660, guid: a5f78faffb30cba4584331f60c8d307a, type: 3}
+      propertyPath: windSpeed
+      value: 1
+      objectReference: {fileID: 0}
+    - target: {fileID: 7271659090622779660, guid: a5f78faffb30cba4584331f60c8d307a, type: 3}
       propertyPath: outputWindFarm
       value: 
       objectReference: {fileID: 1195360825}
@@ -485,6 +489,10 @@ PrefabInstance:
       value: 30
       objectReference: {fileID: 0}
     - target: {fileID: 7271659090622779660, guid: a5f78faffb30cba4584331f60c8d307a, type: 3}
+      propertyPath: windSpeed
+      value: 1
+      objectReference: {fileID: 0}
+    - target: {fileID: 7271659090622779660, guid: a5f78faffb30cba4584331f60c8d307a, type: 3}
       propertyPath: isOperational
       value: 1
       objectReference: {fileID: 0}
@@ -754,9 +762,10 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 9fef95ab3961e534ebe641fccdb8339d, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
+  inputPower: 0
+  outputPower: 0
   inputInverter: {fileID: 1426751281}
-  outputBatteries:
-  - {fileID: 1080049302}
+  outputBattery: {fileID: 1080049302}
   outputGrid: {fileID: 1127377864}
 --- !u!65 &973956027
 BoxCollider:
@@ -879,8 +888,12 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 01ae5cd7dc90bab4b9dc1b090c28a84c, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
+  inputPower: 0
+  outputPower: 0
   inputTransformer: {fileID: 973956026}
   outputGrid: {fileID: 1127377864}
+  currentCharge: 50
+  isCharging: 0
   capacity: 100
 --- !u!65 &1080049303
 BoxCollider:
@@ -1003,6 +1016,8 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 1ca27a5612d319743a6ca5e4839452d6, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
+  inputPower: 0
+  outputPower: 0
   inputTransformer: {fileID: 973956026}
   inputBattery: {fileID: 1080049302}
   outputConsumers:
@@ -1143,6 +1158,8 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 831eb258a2f98cf4d9e23788fd5db777, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
+  inputPower: 0
+  outputPower: 0
   inputGrid: {fileID: 1127377864}
   outputConsumption: 10
 --- !u!1 &1195360824
@@ -1176,6 +1193,8 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: df6f688bd12c9044c9ad19c657158bbf, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
+  inputPower: 0
+  outputPower: 0
   inputTurbines:
   - {fileID: 1225884}
   - {fileID: 1400842326}
@@ -1183,7 +1202,6 @@ MonoBehaviour:
   - {fileID: 789938371}
   - {fileID: 1342209187}
   inverter: {fileID: 1426751281}
-  totalPowerOutput: 0
 --- !u!4 &1195360826
 Transform:
   m_ObjectHideFlags: 0
@@ -1470,6 +1488,8 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: c18f1f1c403547348a5f775977888039, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
+  inputPower: 0
+  outputPower: 0
   inputFarm: {fileID: 1195360825}
   outputTransformer: {fileID: 973956026}
 --- !u!1 &1439569850
@@ -1748,6 +1768,10 @@ PrefabInstance:
       value: 50
       objectReference: {fileID: 0}
     - target: {fileID: 7271659090622779660, guid: a5f78faffb30cba4584331f60c8d307a, type: 3}
+      propertyPath: windSpeed
+      value: 1
+      objectReference: {fileID: 0}
+    - target: {fileID: 7271659090622779660, guid: a5f78faffb30cba4584331f60c8d307a, type: 3}
       propertyPath: outputWindFarm
       value: 
       objectReference: {fileID: 1195360825}
@@ -1967,6 +1991,10 @@ PrefabInstance:
     - target: {fileID: 949646470888555394, guid: a5f78faffb30cba4584331f60c8d307a, type: 3}
       propertyPath: m_LocalEulerAnglesHint.x
       value: 70
+      objectReference: {fileID: 0}
+    - target: {fileID: 7271659090622779660, guid: a5f78faffb30cba4584331f60c8d307a, type: 3}
+      propertyPath: windSpeed
+      value: 1
       objectReference: {fileID: 0}
     - target: {fileID: 7271659090622779660, guid: a5f78faffb30cba4584331f60c8d307a, type: 3}
       propertyPath: outputWindFarm
@@ -2257,6 +2285,10 @@ PrefabInstance:
     serializedVersion: 3
     m_TransformParent: {fileID: 0}
     m_Modifications:
+    - target: {fileID: 7271659090622779660, guid: a5f78faffb30cba4584331f60c8d307a, type: 3}
+      propertyPath: windSpeed
+      value: 1
+      objectReference: {fileID: 0}
     - target: {fileID: 7271659090622779660, guid: a5f78faffb30cba4584331f60c8d307a, type: 3}
       propertyPath: outputWindFarm
       value: 

@@ -1,17 +1,14 @@
 using UnityEngine;
+using System.Collections.Generic;
 
 public abstract class ElectricalComponent : MonoBehaviour
 {
-    [Header("Power Flow")]
-    [SerializeField] protected float inputPower = 0f;
-    [SerializeField] protected float outputPower = 0f;
-
-    public float OutputPower => outputPower; // Public getter for access
+    protected float inputPower = 0f;
+    protected float outputPower = 0f;
 
     public virtual void ReceivePower(float power)
     {
         inputPower = power;
-        SetOutputPower(power);
     }
 
     public virtual float ProvidePower(float requestedPower)
@@ -21,11 +18,6 @@ public abstract class ElectricalComponent : MonoBehaviour
         return providedPower;
     }
 
-    public virtual float Charge(float power) { return 0f; }
-    public virtual float Discharge(float requestedPower) { return 0f; }
-
-    protected void SetOutputPower(float power)
-    {
-        outputPower = power;
-    }
+    public virtual float Charge(float power) { return 0f; }  // Default, overridden by Battery
+    public virtual float Discharge(float requestedPower) { return 0f; }  // Default, overridden by Battery
 }

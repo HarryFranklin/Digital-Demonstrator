@@ -1,33 +1,58 @@
 using UnityEngine;
+using System.Collections.Generic;
 
-public class Turbine : ElectricalComponent
+public class Turbine : MonoBehaviour
 {
-    public WindFarm outputWindFarm;
-    public float windSpeed = 10f;
-    public float maxSpeed = 20f;
-    public bool isOperational = true;
+    /**
+    Turbine class is the source of the power system.  One or many turbines make up a wind farm.
+    One or many wind farms send power to an inverter, then to a transformer.
+    If power demand is too low, excess power is sent from the transformer to a battery, then to the grid as required.
+    If demand is sufficient, power is sent from transformer to the grid.
+    If the source power is too low, the battery is discharged to make up the difference.
+    Power is sent from the grid to the consumer.
 
-    public GameObject rotationPoint;
-    public GameObject pivot;
+    Current stage: TURBINE
+    Next stage: WIND FARM
+    **/
+
+    // I/O
+    public WindFarm outputWindFarm; // One or multiple turbines per farm.
+    // I/O
+
+    public float windSpeed = 10f; // Controls rotation speed
+    public float maxSpeed = 20f; // Max speed before efficiency drops off, and side effects can happen
+    public bool isOperational = true; // Is the turbine on? Set to True by default
+
+    public float powerOutput;
+    public GameObject rotationPoint; // The part that should rotate (blades)
+    public GameObject pivot; // The part that the blades should rotate around
+
+    void Start()
+    {
+        
+    }
 
     void Update()
     {
-        float adjustedSpeed = windSpeed;
-
-        if (outputWindFarm != null && outputWindFarm.inverter.outputTransformer.outputBattery.IsFull())
-        {
-            adjustedSpeed *= 0.5f; // Slow down when battery is full
-        }
-
         if (isOperational && rotationPoint != null)
         {
-            float rotationSpeed = Mathf.Clamp(adjustedSpeed, 0, maxSpeed);
+            float rotationSpeed = Mathf.Clamp(windSpeed, 0, maxSpeed);
             rotationPoint.transform.RotateAround(pivot.transform.position, Vector3.forward, rotationSpeed * Time.deltaTime * 10);
-            SetOutputPower(rotationSpeed);  // Assign power based on speed
+            powerOutput = CalculatePower(rotationSpeed);
         }
-        else
-        {
-            SetOutputPower(0);
-        }
+        else 
+        { 
+            powerOutput = 0; 
+        } 
+    }
+
+    private float CalculatePower(float speed)
+    {
+        return speed; // Placeholder logic
+    }
+
+    public float GetPowerOutput()
+    {
+        return powerOutput;
     }
 }

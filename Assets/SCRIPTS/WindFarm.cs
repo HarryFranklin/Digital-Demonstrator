@@ -7,8 +7,8 @@ public class WindFarm : MonoBehaviour
     public List<Turbine> inputTurbines = new List<Turbine>();
     public Inverter inverter;  // Reference to inverter (next stage)
     // I/O
-
-    private float totalPowerInput;
+    
+    public float totalPowerInput;
 
     void Update()
     {

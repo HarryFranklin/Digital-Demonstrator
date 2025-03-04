@@ -15,5 +15,13 @@ public class Consumer : MonoBehaviour
     void Update()
     {
         // Functionality added later
+        if (powerInput == powerConsumption)
+        {
+            Debug.Log("Power Demands Met");
+        }
+        if (powerInput < powerConsumption)
+        {
+            Debug.Log("Not Enough Power");
+        }
     }
 }

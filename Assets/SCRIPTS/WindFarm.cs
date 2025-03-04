@@ -29,6 +29,7 @@ public class WindFarm : MonoBehaviour
     // Power receiving method, can be extended for managing power more efficiently
     public void ReceivePower(float power)
     {
+        totalPowerInput = 0;
         totalPowerInput += power; // Accumulate power from turbines or other sources
     }
 

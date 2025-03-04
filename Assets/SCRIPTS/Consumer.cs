@@ -9,19 +9,18 @@ public class Consumer : MonoBehaviour
     // I/O
     public PowerGrid inputGrid;  // Reference to the grid this consumer is connected to
     public float powerInput;  // Amount of power this consumer receives from the grid
-    public float powerConsumption = 20f;  // Amount of power this consumer requires
+    public float powerConsumption = 10f;  // Amount of power this consumer requires
     // I/O
 
     void Update()
     {
-        // Functionality added later
-        if (powerInput == powerConsumption)
+        if (powerInput >= powerConsumption)
         {
-            Debug.Log("Power Demands Met");
+            Debug.Log($"Consumer {gameObject.name}: Power Demands Met (Received {powerInput} / Required {powerConsumption})");
         }
-        if (powerInput < powerConsumption)
+        else
         {
-            Debug.Log("Not Enough Power");
+            Debug.Log($"Consumer {gameObject.name}: Not Enough Power (Received {powerInput} / Required {powerConsumption})");
         }
     }
 }

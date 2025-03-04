@@ -3,35 +3,40 @@ using System.Collections.Generic;
 
 public class PowerGrid : MonoBehaviour
 {
-    /**
-    Current stage: GRID
-    Next stage: CONSUMER
-    **/
-
     // I/O
-    public List<Consumer> consumers;  // List of consumers connected to this grid
-    // I/O
-
-    public float powerInput;  // Total power available from the grid
+    public List<Consumer> consumers;
+    public Battery outputBattery;  // Reference to the battery supplying power
+    public float powerInput;  // Power from the battery and other sources
+    public float totalConsumption;
+    private float dischargeRate = 50f;
 
     void Update()
     {
-        float totalConsumption = 0f;
+        // Recalculate powerInput for this frame
+        powerInput = outputBattery.storedPower / dischargeRate;
+
+        // Recalculate total consumption
+        totalConsumption = 0;
         foreach (Consumer consumer in consumers)
         {
-            totalConsumption += consumer.powerConsumption;  // Sum all consumers' power consumption needs
+            totalConsumption += consumer.powerConsumption;
         }
 
-        // Distribute power based on each consumer's consumption needs
+        // Ensure we don't assign more power than available
+        float availablePower = powerInput;
+
         foreach (Consumer consumer in consumers)
         {
-            if (totalConsumption > 0f) // Avoid division by zero
-            {
-                consumer.powerInput = (consumer.powerConsumption / totalConsumption) * powerInput;
+            if (totalConsumption > 0f)
+            {   
+                float requestedPower = consumer.powerConsumption;
+                float allocatedPower = Mathf.Min(requestedPower, availablePower); // Allocate power
+                consumer.powerInput = allocatedPower;
+                availablePower -= allocatedPower;  // Subtract allocated power from available power
             }
             else
             {
-                consumer.powerInput = 0f;  // No power if no consumption
+                consumer.powerInput = 0f;
             }
         }
     }

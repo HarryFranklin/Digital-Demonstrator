@@ -2,11 +2,6 @@ using UnityEngine;
 
 public class Battery : MonoBehaviour
 {
-    /**
-    Current stage: BATTERY
-    Next stage: GRID
-    **/
-
     // I/O
     public Transformer inputTransformer;
     public PowerGrid outputGrid;
@@ -20,22 +15,28 @@ public class Battery : MonoBehaviour
 
     void Update()
     {
-        if (storedPower < capacity)
+        // If there’s power coming to the battery, store it
+        if (powerInput > 0)
         {
             storedPower += powerInput;
             if (storedPower > capacity)
             {
-                storedPower = capacity;
+                storedPower = capacity; // Ensure the battery doesn't exceed capacity
             }
         }
         else
         {
-            outputGrid.powerInput = powerInput;
+            // If there's no power coming to the battery, transfer power to the grid (when battery is full)
+            if (storedPower > 0)
+            {
+                outputGrid.powerInput += storedPower;  // Add stored power to the grid
+                storedPower = 0; // Reset stored power after it’s used
+            }
         }
     }
 
     public bool isFull()
     {
-        return (storedPower >= capacity);
+        return storedPower >= capacity;
     }
 }

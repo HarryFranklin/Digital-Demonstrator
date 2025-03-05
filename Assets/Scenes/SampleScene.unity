@@ -895,7 +895,6 @@ MonoBehaviour:
   capacity: 10000
   storedPower: 0
   powerInput: 0
-  dischargeRate: 50
 --- !u!65 &1080049303
 BoxCollider:
   m_ObjectHideFlags: 0
@@ -1019,8 +1018,9 @@ MonoBehaviour:
   m_EditorClassIdentifier: 
   consumers:
   - {fileID: 1134539488}
-  connectedBattery: {fileID: 1080049302}
+  outputBattery: {fileID: 1080049302}
   powerInput: 0
+  totalConsumption: 0
 --- !u!65 &1127377865
 BoxCollider:
   m_ObjectHideFlags: 0
@@ -1159,7 +1159,7 @@ MonoBehaviour:
   m_EditorClassIdentifier: 
   inputGrid: {fileID: 1127377864}
   powerInput: 0
-  powerConsumption: 0
+  powerConsumption: 10
 --- !u!1 &1195360824
 GameObject:
   m_ObjectHideFlags: 0

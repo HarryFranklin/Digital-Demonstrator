@@ -28,12 +28,6 @@ public class Turbine : MonoBehaviour
         {
             powerOutput = 0f; // No power if turbine is offline
         }
-
-        // Send updated power to wind farm
-        if (outputWindFarm != null)
-        {
-            outputWindFarm.ReceivePower(powerOutput);
-        }
     }
 
     private void RotateBlades()

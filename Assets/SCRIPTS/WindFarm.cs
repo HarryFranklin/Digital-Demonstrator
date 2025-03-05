@@ -13,10 +13,10 @@ public class WindFarm : MonoBehaviour
     void Update()
     {
         // Calculate total power input from turbines
-        totalPowerInput = 0f;
+        totalPowerInput = 0f; // Reset before summing
         foreach (Turbine turbine in inputTurbines)
         {
-            totalPowerInput += turbine.powerOutput; // Directly use turbine's powerOutput
+            totalPowerInput += turbine.powerOutput; // Sum turbine power outputs
         }
 
         // Send power to inverter if available
@@ -24,13 +24,6 @@ public class WindFarm : MonoBehaviour
         {
             inverter.powerInput = totalPowerInput;
         }
-    }
-
-    // Power receiving method, can be extended for managing power more efficiently
-    public void ReceivePower(float power)
-    {
-        totalPowerInput = 0;
-        totalPowerInput += power; // Accumulate power from turbines or other sources
     }
 
     // Method to visualise wind farm centre (average position of turbines)

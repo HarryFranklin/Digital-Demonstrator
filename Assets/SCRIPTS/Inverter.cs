@@ -16,6 +16,6 @@ public class Inverter : MonoBehaviour
 
     void Update()
     {
-        //outputTransformer.powerInput = powerInput;
+        outputTransformer.powerInput = powerInput;
     }
 }

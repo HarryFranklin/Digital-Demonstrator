@@ -19,8 +19,6 @@ public class Transformer : MonoBehaviour
 
     void Update()
     {
-        powerInput = inputInverter.powerInput;
-
         // Handle power distribution between grid and batteries
         foreach (Battery battery in outputBatteries)
         {

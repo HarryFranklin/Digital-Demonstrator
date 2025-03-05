@@ -1331,11 +1331,11 @@ MonoBehaviour:
   m_GameObject: {fileID: 1195360824}
   m_Enabled: 1
   m_EditorHideFlags: 0
-  m_Script: {fileID: 11500000, guid: 90239f0efa4b07f43a97d8cf205f0399, type: 3}
+  m_Script: {fileID: 11500000, guid: 279ff45246a646142b4246d62324d09c, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
   windFarm: {fileID: 1195360825}
-  circleRenderer: {fileID: 1469683035}
+  circleRenderer: {fileID: 1195360827}
   turbineLines: []
   circleSegments: 36
   circleRadius: 0.5

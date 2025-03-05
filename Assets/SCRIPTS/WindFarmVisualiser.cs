@@ -2,7 +2,7 @@ using UnityEngine;
 using System.Collections.Generic;
 using System.Linq;
 
-public class WireConnector : MonoBehaviour
+public class WindFarmVisualiser : MonoBehaviour
 {
     public WindFarm windFarm;
     public LineRenderer circleRenderer;

@@ -5,44 +5,49 @@ public class Transformer : MonoBehaviour
 {
     // I/O
     public Inverter inputInverter;  // Reference to the input inverter
-    public List<Battery> outputBatteries = new List<Battery>();  // List of batteries to store excess power
     public PowerGrid outputGrid;  // Reference to the output grid
+    public Battery outputBattery;  // Reference to the battery
     // I/O
 
-    public float powerInput;
+    public float powerInput;  // Power from the inverter
     public float powerToGrid;
     public float powerToBattery;
 
-    void Start()
-    {
-    }
-
     void Update()
     {
-        // Handle power distribution between grid and batteries
-        foreach (Battery battery in outputBatteries)
-        {
-            // If battery is full, no power should go to it, send power to grid
-            if (battery.isFull())
-            {
-                battery.powerInput = 0;
-                outputGrid.powerInput += powerInput; // Add transformer power to output grid input
-            }
-            else if (battery.storedPower < battery.capacity && powerInput > 0)
-            {
-                // If battery isn't full, send power to the battery
-                float availablePower = powerInput;
-                float chargeAmount = Mathf.Min(availablePower, battery.capacity - battery.storedPower); // Charge battery with available power
-                battery.powerInput = chargeAmount;
-                powerToBattery = chargeAmount;
-                powerInput -= chargeAmount; // Subtract the sent power from available transformer power
-            }
+        float gridDemand = outputGrid.totalConsumption; // Get total consumption
 
-            // Add any leftover power to the grid
-            if (powerInput > 0)
+        // Reset powerToBattery for this frame
+        powerToBattery = 0f;
+
+        // If generated power matches consumption, send all power to the grid
+        if (powerInput == gridDemand)
+        {
+            powerToGrid = powerInput;
+        }
+        // If generated power is more than needed, send excess to the battery
+        else if (powerInput > gridDemand)
+        {
+            powerToGrid = gridDemand;
+            float excessPower = powerInput - gridDemand;
+
+            if (!outputBattery.isFull())
             {
-                outputGrid.powerInput += powerInput;
+                powerToBattery = excessPower;
+            }
+            else
+            {
+                Debug.Log("Battery full! Implement logic to reduce turbine power output.");
             }
         }
+        // If there isn't enough generated power, send all available power to the grid
+        else 
+        {
+            powerToGrid = powerInput;
+        }
+
+        // Apply calculated power values
+        outputGrid.powerInput = powerToGrid;
+        outputBattery.powerInput = powerToBattery;
     }
 }

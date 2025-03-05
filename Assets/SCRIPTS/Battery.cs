@@ -10,29 +10,32 @@ public class Battery : MonoBehaviour
     // Battery Information
     public float capacity = 1000f;  // Battery capacity
     public float storedPower = 0f;  // Power currently stored in the battery
-
     public float powerInput;
+    public float powerOutput; // Power discharged to grid
 
     void Update()
     {
-        // If there’s power coming to the battery, store it
+        // Reset power output each frame
+        powerOutput = 0f;
+
+        // If receiving power, store it
         if (powerInput > 0)
         {
             storedPower += powerInput;
-            if (storedPower > capacity)
-            {
-                storedPower = capacity; // Ensure the battery doesn't exceed capacity
-            }
+            storedPower = Mathf.Min(storedPower, capacity); // Ensure it doesn't exceed max capacity
         }
-        else
+
+        // If grid needs extra power, discharge the battery
+        float missingPower = outputGrid.totalConsumption - outputGrid.powerInput;
+
+        if (missingPower > 0 && storedPower > 0)
         {
-            // If there's no power coming to the battery, transfer power to the grid (when battery is full)
-            if (storedPower > 0)
-            {
-                outputGrid.powerInput += storedPower;  // Add stored power to the grid
-                storedPower = 0; // Reset stored power after it’s used
-            }
+            powerOutput = Mathf.Min(missingPower, storedPower);
+            storedPower -= powerOutput;
         }
+
+        // Send discharged power to the grid
+        outputGrid.powerInput += powerOutput;
     }
 
     public bool isFull()

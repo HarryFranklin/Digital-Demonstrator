@@ -763,9 +763,8 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: 
   inputInverter: {fileID: 1426751281}
-  outputBatteries:
-  - {fileID: 1080049302}
   outputGrid: {fileID: 1127377864}
+  outputBattery: {fileID: 1080049302}
   powerInput: 0
   powerToGrid: 0
   powerToBattery: 0
@@ -895,6 +894,7 @@ MonoBehaviour:
   capacity: 10000
   storedPower: 0
   powerInput: 0
+  powerOutput: 0
 --- !u!65 &1080049303
 BoxCollider:
   m_ObjectHideFlags: 0

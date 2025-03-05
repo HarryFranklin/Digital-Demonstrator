@@ -12,14 +12,19 @@ public class PowerGrid : MonoBehaviour
 
     void Update()
     {
-        // Recalculate powerInput for this frame
-        powerInput = outputBattery.storedPower / dischargeRate;
+        // Reset total consumption before recalculating
+        totalConsumption = 0f;
 
-        // Recalculate total consumption
-        totalConsumption = 0;
+        // Recalculate total consumption from all consumers
         foreach (Consumer consumer in consumers)
         {
             totalConsumption += consumer.powerConsumption;
+        }
+
+        // If not enough power, add battery power to it
+        if (powerInput < totalConsumption)
+        {
+            powerInput += outputBattery.storedPower / dischargeRate; 
         }
 
         // Ensure we don't assign more power than available
@@ -39,5 +44,8 @@ public class PowerGrid : MonoBehaviour
                 consumer.powerInput = 0f;
             }
         }
+
+        // Debugging
+        Debug.Log($"PowerGrid: Total Consumption = {totalConsumption}, Power Input = {powerInput}");
     }
 }

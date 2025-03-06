@@ -3,49 +3,46 @@ using System.Collections.Generic;
 
 public class PowerGrid : MonoBehaviour
 {
-    // I/O
     public List<Consumer> consumers;
-    public Battery outputBattery;  // Reference to the battery supplying power
-    public float powerInput;  // Power from the battery and other sources
+    public Transformer inputTransformer;
+    public Battery inputBattery;
+    public float powerInput;
     public float totalConsumption;
-    private float dischargeRate = 50f;
+
+    private PowerLineConnector powerLine;
+
+    void Start()
+    {
+        powerLine = GetComponent<PowerLineConnector>();
+    }
 
     void Update()
     {
-        // Reset total consumption before recalculating
+        // Reset total consumption and recalculate
         totalConsumption = 0f;
-
-        // Recalculate total consumption from all consumers
         foreach (Consumer consumer in consumers)
         {
             totalConsumption += consumer.powerConsumption;
         }
 
-        // If not enough power, add battery power to it
-        if (powerInput < totalConsumption)
+        // Aggregate power from transformer and battery
+        powerInput = 0f;
+        if (inputTransformer != null) powerInput += inputTransformer.powerInput;
+        if (inputBattery != null) powerInput += inputBattery.powerOutput;
+
+        // Update visualisation
+        if (powerLine != null)
         {
-            powerInput += outputBattery.storedPower / dischargeRate; 
+            powerLine.powerFlow = powerInput;
         }
 
-        // Ensure we don't assign more power than available
+        // Distribute power to consumers
         float availablePower = powerInput;
-
         foreach (Consumer consumer in consumers)
         {
-            if (totalConsumption > 0f)
-            {   
-                float requestedPower = consumer.powerConsumption;
-                float allocatedPower = Mathf.Min(requestedPower, availablePower); // Allocate power
-                consumer.powerInput = allocatedPower;
-                availablePower -= allocatedPower;  // Subtract allocated power from available power
-            }
-            else
-            {
-                consumer.powerInput = 0f;
-            }
+            float allocatedPower = Mathf.Min(consumer.powerConsumption, availablePower);
+            consumer.powerInput = allocatedPower;
+            availablePower -= allocatedPower;
         }
-
-        // Debugging
-        Debug.Log($"PowerGrid: Total Consumption = {totalConsumption}, Power Input = {powerInput}");
     }
 }

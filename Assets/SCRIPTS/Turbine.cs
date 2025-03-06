@@ -19,6 +19,9 @@ public class Turbine : MonoBehaviour
 
     void Update()
     {
+        // Automatically toggle operational status based on wind speed
+        isOperational = windSpeed > 0;
+
         if (isOperational)
         {
             RotateBlades();

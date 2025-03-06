@@ -2,40 +2,52 @@ using UnityEngine;
 
 public class Battery : MonoBehaviour
 {
-    // I/O
     public Transformer inputTransformer;
     public PowerGrid outputGrid;
-    // I/O
-
-    // Battery Information
-    public float capacity = 1000f;  // Battery capacity
-    public float storedPower = 0f;  // Power currently stored in the battery
+    public float capacity = 1000f;  
+    public float storedPower = 0f;  
     public float powerInput;
-    public float powerOutput; // Power discharged to grid
+    public float powerOutput; 
+
+    private PowerLineConnector powerLine;
+
+    void Start()
+    {
+        powerLine = GetComponent<PowerLineConnector>();
+
+        // Ensure connections are correctly assigned
+        if (powerLine != null)
+        {
+            if (inputTransformer != null) powerLine.inputObjects.Add(inputTransformer.transform);
+            if (outputGrid != null) powerLine.outputObjects.Add(outputGrid.transform);
+        }
+    }
 
     void Update()
     {
-        // Reset power output each frame
-        powerOutput = 0f;
-
-        // If receiving power, store it
+        // Store incoming power
         if (powerInput > 0)
         {
             storedPower += powerInput;
-            storedPower = Mathf.Min(storedPower, capacity); // Ensure it doesn't exceed max capacity
+            storedPower = Mathf.Min(storedPower, capacity);
         }
 
-        // If grid needs extra power, discharge the battery
+        // Discharge power to grid if needed
         float missingPower = outputGrid.totalConsumption - outputGrid.powerInput;
+        powerOutput = (missingPower > 0 && storedPower > 0) ? Mathf.Min(missingPower, storedPower) : 0;
 
-        if (missingPower > 0 && storedPower > 0)
-        {
-            powerOutput = Mathf.Min(missingPower, storedPower);
-            storedPower -= powerOutput;
-        }
+        storedPower -= powerOutput;
+        storedPower = Mathf.Max(0, storedPower);
 
         // Send discharged power to the grid
         outputGrid.powerInput += powerOutput;
+
+        // Set power flow values for input and output lines
+        if (powerLine != null)
+        {
+            // Set the power flow for both input and output lines
+            powerLine.powerFlow = powerInput > 0 ? powerInput : powerOutput > 0 ? powerOutput : 0;
+        }
     }
 
     public bool isFull()

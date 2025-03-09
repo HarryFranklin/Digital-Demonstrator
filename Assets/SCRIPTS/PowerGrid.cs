@@ -1,48 +1,144 @@
-using UnityEngine;
+using System.Collections;
 using System.Collections.Generic;
+using UnityEngine;
 
-public class PowerGrid : MonoBehaviour
+public class PowerGrid : PowerComponentBase
 {
-    public List<Consumer> consumers;
-    public Transformer inputTransformer;
-    public Battery inputBattery;
-    public float powerInput;
-    public float totalConsumption;
-
-    private PowerLineConnector powerLine;
-
-    void Start()
+    private List<Consumer> connectedConsumers = new List<Consumer>();
+    private Dictionary<IPowerComponent, float> powerSources = new Dictionary<IPowerComponent, float>();
+    private float totalAvailablePower = 0f;
+    
+    protected override void Awake()
     {
-        powerLine = GetComponent<PowerLineConnector>();
+        base.Awake();
+        StartCoroutine(UpdateVisualisationRoutine(0.1f));
     }
-
+    
     void Update()
     {
-        // Reset total consumption and recalculate
-        totalConsumption = 0f;
-        foreach (Consumer consumer in consumers)
+        if (!isOperational)
         {
-            totalConsumption += consumer.powerConsumption;
+            currentPower = 0f;
+            return;
         }
-
-        // Aggregate power from transformer and battery
-        powerInput = 0f;
-        if (inputTransformer != null) powerInput += inputTransformer.powerInput;
-        if (inputBattery != null) powerInput += inputBattery.powerOutput;
-
-        // Update visualisation
-        if (powerLine != null)
-        {
-            powerLine.powerFlow = powerInput;
-        }
-
+        
+        // Sum up all available power
+        currentPower = totalAvailablePower;
+        
         // Distribute power to consumers
-        float availablePower = powerInput;
-        foreach (Consumer consumer in consumers)
+        DistributePower();
+        
+        // Reset available power for next frame
+        totalAvailablePower = 0f;
+        powerSources.Clear();
+    }
+    
+    // Register a consumer
+    public void RegisterConsumer(Consumer consumer)
+    {
+        if (!connectedConsumers.Contains(consumer))
         {
-            float allocatedPower = Mathf.Min(consumer.powerConsumption, availablePower);
-            consumer.powerInput = allocatedPower;
-            availablePower -= allocatedPower;
+            connectedConsumers.Add(consumer);
+        }
+    }
+    
+    // Unregister a consumer
+    public void UnregisterConsumer(Consumer consumer)
+    {
+        connectedConsumers.Remove(consumer);
+    }
+    
+    // Receive power from a source (transformer or battery)
+    public void ReceivePower(IPowerComponent source, float power)
+    {
+        powerSources[source] = power;
+        totalAvailablePower += power;
+    }
+    
+    // Get total power demand from all consumers
+    public float GetTotalDemand()
+    {
+        float totalDemand = 0f;
+        foreach (var consumer in connectedConsumers)
+        {
+            if (consumer != null && consumer.IsOperational())
+            {
+                totalDemand += consumer.GetPowerDemand();
+            }
+        }
+        return totalDemand;
+    }
+    
+    // Distribute available power to consumers
+    private void DistributePower()
+    {
+        float totalDemand = GetTotalDemand();
+        
+        // If no consumers or no demand, nothing to do
+        if (connectedConsumers.Count == 0 || totalDemand <= 0) return;
+        
+        // If enough power, give each consumer what they need
+        if (currentPower >= totalDemand)
+        {
+            foreach (var consumer in connectedConsumers)
+            {
+                if (consumer != null && consumer.IsOperational())
+                {
+                    consumer.ReceivePower(consumer.GetPowerDemand());
+                }
+            }
+        }
+        // Otherwise, distribute proportionally
+        else
+        {
+            float ratio = currentPower / totalDemand;
+            foreach (var consumer in connectedConsumers)
+            {
+                if (consumer != null && consumer.IsOperational())
+                {
+                    float allocation = consumer.GetPowerDemand() * ratio;
+                    consumer.ReceivePower(allocation);
+                }
+            }
+        }
+    }
+    
+    public override void VisualiseConnections()
+    {
+        if (visualiser == null) return;
+        
+        // Visualise connections from sources (transformer, battery)
+        foreach (var source in powerSources.Keys)
+        {
+            if (source is MonoBehaviour mb)
+            {
+                visualiser.CreateOrUpdateConnection(mb.gameObject, gameObject, powerSources[source]);
+            }
+        }
+        
+        // Visualise connections to consumers
+        foreach (var consumer in connectedConsumers)
+        {
+            if (consumer != null)
+            {
+                float allocatedPower = 0;
+                float requiredPower = consumer.GetPowerDemand();
+                
+                // Calculate actual power sent to this consumer
+                if (GetTotalDemand() > 0)
+                {
+                    if (currentPower >= GetTotalDemand())
+                    {
+                        allocatedPower = requiredPower;
+                    }
+                    else
+                    {
+                        allocatedPower = requiredPower * (currentPower / GetTotalDemand());
+                    }
+                }
+                
+                visualiser.CreateOrUpdateConnection(gameObject, consumer.gameObject, allocatedPower, requiredPower);
+            }
         }
     }
 }

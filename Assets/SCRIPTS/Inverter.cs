@@ -1,51 +1,49 @@
+using System.Collections;
+using System.Collections.Generic;
 using UnityEngine;
 
-public class Inverter : MonoBehaviour
+public class Inverter : PowerComponentBase
 {
-    public WindFarm inputWindFarm;
+    // I/O
     public Transformer outputTransformer;
-    public float powerInput;
     
-    private PowerLineConnector powerLine;
-
-    void Start()
+    private float inputPower = 0f;
+    
+    protected override void Awake()
     {
-        powerLine = GetComponent<PowerLineConnector>();
-
-        // Ensure the wind farm's center is treated as the input
-        if (powerLine != null && inputWindFarm != null)
-        {
-            powerLine.inputObjects.Clear();
-            GameObject windFarmCenter = new GameObject("WindFarmCenter");
-            windFarmCenter.transform.position = inputWindFarm.GetCenterPoint();
-            powerLine.inputObjects.Add(windFarmCenter.transform);
-        }
-
-        // Ensure the output transformer is correctly assigned
-        if (powerLine != null && outputTransformer != null)
-        {
-            powerLine.outputObjects.Add(outputTransformer.transform);
-        }
+        base.Awake();
+        StartCoroutine(UpdateVisualisationRoutine(0.1f));
     }
-
+    
     void Update()
     {
-        powerInput = inputWindFarm.totalPowerInput;
-
-        if (powerLine != null)
+        if (isOperational)
         {
-            // Update the wind farm center position dynamically
-            if (powerLine.inputObjects.Count > 0 && powerLine.inputObjects[0] != null)
+            currentPower = inputPower; // Pass through all power
+            
+            // Send power to transformer
+            if (outputTransformer != null)
             {
-                powerLine.inputObjects[0].position = inputWindFarm.GetCenterPoint();
+                outputTransformer.ReceivePower(currentPower);
             }
-
-            powerLine.powerFlow = powerInput;
         }
-
-        if (outputTransformer != null)
+        else
         {
-            outputTransformer.powerInput = powerInput;
+            currentPower = 0f;
+        }
+    }
+    
+    // Receive power from wind farm
+    public void ReceivePower(float power)
+    {
+        inputPower = power;
+    }
+    
+    public override void VisualiseConnections()
+    {
+        if (visualiser != null && outputTransformer != null)
+        {
+            visualiser.CreateOrUpdateConnection(gameObject, outputTransformer.gameObject, currentPower);
         }
     }
 }

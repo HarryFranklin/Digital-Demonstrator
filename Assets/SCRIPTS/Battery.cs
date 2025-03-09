@@ -1,57 +1,97 @@
+using System.Collections;
+using System.Collections.Generic;
 using UnityEngine;
 
-public class Battery : MonoBehaviour
+// Battery class
+public class Battery : PowerComponentBase
 {
-    public Transformer inputTransformer;
+    // I/O
     public PowerGrid outputGrid;
-    public float capacity = 1000f;  
-    public float storedPower = 0f;  
-    public float powerInput;
-    public float powerOutput; 
-
-    private PowerLineConnector powerLine;
-
-    void Start()
+    
+    public float maxCapacity;
+    public float currentCharge = 0f;
+    public float chargeEfficiency = 0.9f; // Energy stored vs energy received
+    public float dischargeEfficiency = 0.95f; // Energy output vs energy used from storage
+    
+    private float dischargeAmount = 0f;
+    
+    protected override void Awake()
     {
-        powerLine = GetComponent<PowerLineConnector>();
-
-        // Ensure connections are correctly assigned
-        if (powerLine != null)
-        {
-            if (inputTransformer != null) powerLine.inputObjects.Add(inputTransformer.transform);
-            if (outputGrid != null) powerLine.outputObjects.Add(outputGrid.transform);
-        }
+        base.Awake();
+        StartCoroutine(UpdateVisualisationRoutine(0.1f));
     }
-
+    
     void Update()
     {
-        // Store incoming power
-        if (powerInput > 0)
+        if (!isOperational)
         {
-            storedPower += powerInput;
-            storedPower = Mathf.Min(storedPower, capacity);
+            currentPower = 0f;
+            return;
         }
-
-        // Discharge power to grid if needed
-        float missingPower = outputGrid.totalConsumption - outputGrid.powerInput;
-        powerOutput = (missingPower > 0 && storedPower > 0) ? Mathf.Min(missingPower, storedPower) : 0;
-
-        storedPower -= powerOutput;
-        storedPower = Mathf.Max(0, storedPower);
-
-        // Send discharged power to the grid
-        outputGrid.powerInput += powerOutput;
-
-        // Set power flow values for input and output lines
-        if (powerLine != null)
+        
+        // Send power to grid if requested
+        if (dischargeAmount > 0 && currentCharge > 0)
         {
-            // Set the power flow for both input and output lines
-            powerLine.powerFlow = powerInput > 0 ? powerInput : powerOutput > 0 ? powerOutput : 0;
+            // Only discharge what's needed to meet the demand
+            float actualDischarge = Mathf.Min(dischargeAmount, currentCharge);
+            
+            // Apply efficiency to the output (how much actually reaches the grid)
+            currentPower = actualDischarge * dischargeEfficiency;
+            
+            // Deduct the full amount from the battery
+            currentCharge -= actualDischarge;
+            
+            if (outputGrid != null)
+            {
+                outputGrid.ReceivePower(this, currentPower);
+            }
+        }
+        else
+        {
+            currentPower = 0f;
+        }
+        
+        // Reset discharge amount for next frame
+        dischargeAmount = 0f;
+    }
+    
+    // Store excess power - take whatever is available
+    public void StorePower(float excessPower)
+    {
+        if (!isOperational) return;
+        
+        float spaceAvailable = maxCapacity - currentCharge;
+        
+        // Store as much as possible with efficiency loss
+        float actualCharge = Mathf.Min(excessPower * chargeEfficiency, spaceAvailable);
+        currentCharge += actualCharge;
+        
+        // If battery is full and still receiving power, log message
+        if (currentCharge >= maxCapacity * 0.99f && excessPower > 0)
+        {
+            Debug.Log("Battery is full! Consider reducing turbine output to prevent power overflow.");
         }
     }
-
-    public bool isFull()
+    
+    // Request exactly the needed power to meet demand
+    public void RequestPower(float neededAmount)
     {
-        return storedPower >= capacity;
+        if (!isOperational) return;
+        
+        // Account for efficiency - we need to withdraw more than what's needed due to efficiency loss
+        dischargeAmount = neededAmount / dischargeEfficiency;
+    }
+    
+    public float GetChargePercentage()
+    {
+        return (currentCharge / maxCapacity) * 100f;
+    }
+    
+    public override void VisualiseConnections()
+    {
+        if (visualiser != null && outputGrid != null)
+        {
+            visualiser.CreateOrUpdateConnection(gameObject, outputGrid.gameObject, currentPower);
+        }
     }
 }

@@ -1,47 +1,98 @@
-using UnityEngine;
+using System.Collections;
 using System.Collections.Generic;
+using UnityEngine;
 
-public class WindFarm : MonoBehaviour
+public class WindFarm : PowerComponentBase
 {
-    public List<Turbine> inputTurbines = new List<Turbine>();
-    public Inverter inverter;  
-
-    public float totalPowerInput;
-    private PowerLineConnector powerLine;
-
-    void Start()
+    // I/O
+    public Inverter outputInverter;
+    
+    private Dictionary<Turbine, float> turbinePower = new Dictionary<Turbine, float>();
+    private List<Turbine> connectedTurbines = new List<Turbine>();
+    
+    protected override void Awake()
     {
-        powerLine = GetComponent<PowerLineConnector>();
+        base.Awake();
+        StartCoroutine(UpdateVisualisationRoutine(0.1f));
+        StartCoroutine(UpdatePositionRoutine());
     }
-
+    
     void Update()
     {
-        totalPowerInput = 0f;
-        foreach (Turbine turbine in inputTurbines)
+        // Sum up power from all turbines
+        currentPower = 0f;
+        foreach (var power in turbinePower.Values)
         {
-            totalPowerInput += turbine.powerOutput;
+            currentPower += power;
         }
-
-        if (inverter != null)
+        
+        // Send power to inverter
+        if (outputInverter != null && isOperational)
         {
-            inverter.powerInput = totalPowerInput;
-        }
-
-        if (powerLine != null)
-        {
-            powerLine.powerFlow = totalPowerInput;
+            outputInverter.ReceivePower(currentPower);
         }
     }
-
-    public Vector3 GetCenterPoint()
+    
+    // Receive power from a turbine
+    public void ReceivePower(Turbine turbine, float power)
     {
-        if (inputTurbines.Count == 0) return Vector3.zero;
-
-        Vector3 center = Vector3.zero;
-        foreach (Turbine turbine in inputTurbines)
+        if (!connectedTurbines.Contains(turbine))
         {
-            center += turbine.transform.position;
+            connectedTurbines.Add(turbine);
         }
-        return center / inputTurbines.Count;
+        
+        turbinePower[turbine] = power;
+    }
+    
+    public override void VisualiseConnections()
+    {
+        if (visualiser == null) return;
+        
+        // Visualise connections from turbines to wind farm
+        foreach (var turbine in connectedTurbines)
+        {
+            if (turbine != null)
+            {
+                visualiser.CreateOrUpdateConnection(turbine.gameObject, gameObject, turbinePower.ContainsKey(turbine) ? turbinePower[turbine] : 0);
+            }
+        }
+        
+        // Visualise connection to inverter
+        if (outputInverter != null)
+        {
+            visualiser.CreateOrUpdateConnection(gameObject, outputInverter.gameObject, currentPower);
+        }
+    }
+    
+    // Coroutine to update position to centre of turbines
+    private IEnumerator UpdatePositionRoutine()
+    {
+        while (true)
+        {
+            UpdatePosition();
+            yield return new WaitForSeconds(0.5f);
+        }
+    }
+    
+    private void UpdatePosition()
+    {
+        if (connectedTurbines.Count == 0) return;
+        
+        Vector3 centre = Vector3.zero;
+        int count = 0;
+        
+        foreach (var turbine in connectedTurbines)
+        {
+            if (turbine != null)
+            {
+                centre += turbine.transform.position;
+                count++;
+            }
+        }
+        
+        if (count > 0)
+        {
+            transform.position = centre / count;
+        }
     }
 }

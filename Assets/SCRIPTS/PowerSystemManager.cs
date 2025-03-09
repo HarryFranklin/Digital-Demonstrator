@@ -15,11 +15,17 @@ public class PowerSystemManager : MonoBehaviour
     public List<Consumer> consumers = new List<Consumer>();
     
     [Header("Monitoring")]
-    public bool debugMode = true;
+    public bool debugMode = true; // Debug.Log power statuses
     public float monitorInterval = 1f;
     
     [Header("Control")]
     public bool emergencyShutdown = false;
+    
+    [Header("Smart Power Management")]
+    public bool enableDemandMatching = false;
+    public float targetBatteryChargePercentage = 80f;
+    public float batteryChargeBuffer = 10f;
+    public float minTurbineSpeed = 0f;
     
     private void Start()
     {
@@ -61,6 +67,12 @@ public class PowerSystemManager : MonoBehaviour
             {
                 SetAllTurbineWindSpeeds(0f);
                 emergencyShutdown = false;
+            }
+            
+            // Perform demand matching if enabled
+            if (enableDemandMatching)
+            {
+                MatchPowerToLoad();
             }
             
             yield return new WaitForSeconds(monitorInterval);
@@ -127,6 +139,90 @@ public class PowerSystemManager : MonoBehaviour
             }
             
             Debug.Log($"Battery nearly full - reduced turbine output to match demand. New generation target: {targetGeneration:F1}");
+        }
+    }
+    
+    // NEW METHOD: Smart power management to match demand and optimize battery usage
+    public void MatchPowerToLoad()
+    {
+        if (powerGrid == null || turbines.Count == 0) return;
+        
+        // Calculate total current consumer demand
+        float totalDemand = powerGrid.GetTotalDemand();
+        
+        // Calculate battery parameters for optimal charging
+        float batteryChargeRate = 0f;
+        if (battery != null && battery.isOperational)
+        {
+            float currentChargePercentage = battery.GetChargePercentage();
+            
+            // If battery is below target, allocate power for charging
+            if (currentChargePercentage < targetBatteryChargePercentage)
+            {
+                float chargeDeficit = battery.maxCapacity * (targetBatteryChargePercentage / 100f) - battery.currentCharge;
+                // Limit charge rate to 50% of total demand to prevent excessive generation
+                batteryChargeRate = Mathf.Min(chargeDeficit / battery.chargeEfficiency, totalDemand * 0.5f);
+            }
+            // If battery is above target + buffer, no need for additional charging
+            else if (currentChargePercentage > (targetBatteryChargePercentage + batteryChargeBuffer))
+            {
+                batteryChargeRate = 0f;
+            }
+            // Otherwise maintain a small charge rate to keep the battery at target level
+            else
+            {
+                batteryChargeRate = totalDemand * 0.05f; // Small buffer (5% of demand)
+            }
+        }
+        
+        // Calculate required power generation (demand + battery charging)
+        float requiredPower = totalDemand + batteryChargeRate;
+        
+        // Calculate maximum potential power generation
+        float maxPotentialPower = 0f;
+        foreach (var turbine in turbines)
+        {
+            if (turbine != null && turbine.isOperational)
+            {
+                maxPotentialPower += turbine.maxSpeed;
+            }
+        }
+        
+        // Calculate power ratio (how much of max capacity we need)
+        float powerRatio = Mathf.Clamp01(requiredPower / maxPotentialPower);
+        
+        // Set all turbines to appropriate speed
+        foreach (var turbine in turbines)
+        {
+            if (turbine != null && turbine.isOperational)
+            {
+                float optimizedSpeed = Mathf.Max(minTurbineSpeed, turbine.maxSpeed * powerRatio);
+                turbine.ToggleManualControl(true, optimizedSpeed);
+            }
+        }
+        
+        if (debugMode)
+        {
+            Debug.Log($"Smart Power Management: Total demand: {totalDemand:F2}, " +
+                     $"Battery charge rate: {batteryChargeRate:F2}, Required power: {requiredPower:F2}, " +
+                     $"Turbine power ratio: {powerRatio:P0}");
+        }
+    }
+    
+    // Toggle demand matching on/off
+    public void SetDemandMatchingEnabled(bool enabled)
+    {
+        enableDemandMatching = enabled;
+        
+        // If disabling, return turbines to automatic control
+        if (!enabled)
+        {
+            ResetTurbinesToAutomatic();
+        }
+        else
+        {
+            // If enabling, run matching immediately
+            MatchPowerToLoad();
         }
     }
 }

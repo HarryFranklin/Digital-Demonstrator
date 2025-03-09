@@ -34,17 +34,17 @@ public class Turbine : PowerComponentBase
         {
             RotateBlades(effectiveWindSpeed);
             currentPower = effectiveWindSpeed; // Directly use wind speed as power output
-            
-            // Send power to wind farm
-            if (outputWindFarm != null)
-            {
-                outputWindFarm.ReceivePower(this, currentPower);
-            }
         }
         else
         {
             currentPower = 0f; // No power if turbine is offline
             RotateBlades(0f);
+        }
+        
+        // Send power to wind farm - moved outside the if/else blocks
+        if (outputWindFarm != null)
+        {
+            outputWindFarm.ReceivePower(this, currentPower);
         }
     }
     

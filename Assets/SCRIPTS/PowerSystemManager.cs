@@ -5,7 +5,7 @@ using UnityEngine;
 // Power System Manager
 public class PowerSystemManager : MonoBehaviour
 {
-    [Header("System Components")]
+    [Header("System Components")] // References to all components
     public List<Turbine> turbines = new List<Turbine>();
     public WindFarm windFarm;
     public Inverter inverter;
@@ -14,14 +14,14 @@ public class PowerSystemManager : MonoBehaviour
     public PowerGrid powerGrid;
     public List<Consumer> consumers = new List<Consumer>();
     
-    [Header("Monitoring")]
-    public bool debugMode = true; // Debug.Log power statuses
+    [Header("Monitoring")] // Control over status updates (Debug.Log()s)
+    public bool debugMode = true;
     public float monitorInterval = 1f;
     
     [Header("Control")]
     public bool emergencyShutdown = false;
     
-    [Header("Smart Power Management")]
+    [Header("Smart Power Management")] // Smart power management to simulate 
     public bool enableDemandMatching = false;
     public float targetBatteryChargePercentage = 80f;
     public float batteryChargeBuffer = 10f;
@@ -142,7 +142,8 @@ public class PowerSystemManager : MonoBehaviour
         }
     }
     
-    // NEW METHOD: Smart power management to match demand and optimize battery usage
+    // Smart power management to match demand and optimise battery usage
+    // Manual power generation to simulate Nacelle yaw and blade pitch
     public void MatchPowerToLoad()
     {
         if (powerGrid == null || turbines.Count == 0) return;
@@ -196,8 +197,8 @@ public class PowerSystemManager : MonoBehaviour
         {
             if (turbine != null && turbine.isOperational)
             {
-                float optimizedSpeed = Mathf.Max(minTurbineSpeed, turbine.maxSpeed * powerRatio);
-                turbine.ToggleManualControl(true, optimizedSpeed);
+                float optimisedSpeed = Mathf.Max(minTurbineSpeed, turbine.maxSpeed * powerRatio);
+                turbine.ToggleManualControl(true, optimisedSpeed);
             }
         }
         

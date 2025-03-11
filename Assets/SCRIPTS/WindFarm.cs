@@ -70,7 +70,7 @@ public class WindFarm : PowerComponentBase
         while (true)
         {
             UpdatePosition();
-            yield return new WaitForSeconds(0.5f);
+            yield return new WaitForSeconds(0.5f); // Run UpdatePosition() every given time
         }
     }
     

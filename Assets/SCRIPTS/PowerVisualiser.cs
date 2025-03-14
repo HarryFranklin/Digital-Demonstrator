@@ -61,4 +61,37 @@ public class PowerVisualiser : MonoBehaviour
         
         return line;
     }
+
+    public void ForceUpdateAllConnections()
+    {
+        // This will force all connections to update with their current parameters
+        // You'll need to implement this based on how your connections are tracked in your system
+        
+        // Example implementation (assuming you have a way to get the current power values):
+        foreach (var connectionEntry in connectionLines)
+        {
+            var connection = connectionEntry.Key;
+            GameObject from = connection.Item1;
+            GameObject to = connection.Item2;
+            
+            // You'll need to get the current power value from your power system
+            float currentPower = 0;
+            float requiredPower = 0;
+            
+            // Example of how you might get power values:
+            // If from is a turbine and to is a wind farm
+            if (from.CompareTag("WindTurbine") && to.CompareTag("WindFarm"))
+            {
+                Turbine turbine = from.GetComponent<Turbine>();
+                if (turbine != null && turbine.isOperational)
+                {
+                    currentPower = turbine.GetCurrentPower();
+                }
+            }
+            // Add other connection types as needed
+            
+            // Update the line
+            CreateOrUpdateConnection(from, to, currentPower, requiredPower);
+        }
+    }
 }

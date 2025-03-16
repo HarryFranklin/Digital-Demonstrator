@@ -61,7 +61,13 @@ public class Turbine : PowerComponentBase
     {
         if (outputWindFarm != null && visualiser != null)
         {
-            visualiser.CreateOrUpdateConnection(gameObject, outputWindFarm.gameObject, currentPower);
+            // Check if this turbine is being manipulated during a power generation attack
+            bool isManipulated = false;
+            
+            // Use the visualiser's method to check if turbine is manipulated
+            isManipulated = visualiser.IsTurbineManipulated(this);
+            
+            visualiser.CreateOrUpdateConnection(gameObject, outputWindFarm.gameObject, currentPower, 0, isManipulated);
         }
     }
     

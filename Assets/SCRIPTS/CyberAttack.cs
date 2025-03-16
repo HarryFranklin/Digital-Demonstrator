@@ -31,6 +31,9 @@ public class CyberAttack : MonoBehaviour
     
     // Track if we're currently executing an attack
     private Dictionary<string, bool> activeAttacks = new Dictionary<string, bool>();
+
+    // Track which turbines are currently being manipulated during power generation attack
+    private HashSet<Turbine> manipulatedTurbines = new HashSet<Turbine>();
     
     private void Start()
     {
@@ -234,6 +237,12 @@ public class CyberAttack : MonoBehaviour
             
             // Reset turbines to automatic control
             powerSystemManager.ResetTurbinesToAutomatic();
+
+            // Clear the set of manipulated turbines
+            manipulatedTurbines.Clear();
+
+            // Update the visualiser to change the colour of turbine-wind farm lines back to normal
+            ForceVisualiserUpdate();
             
             // UpdateButtonState(powerGenerationButton, false);
         }
@@ -245,16 +254,26 @@ public class CyberAttack : MonoBehaviour
     {
         while (activeAttacks["PowerGeneration"])
         {
+            // Clear the previous set of manipulated turbines
+            manipulatedTurbines.Clear();
+            
             foreach (var turbine in powerSystemManager.turbines)
             {
                 if (turbine != null && Random.value > 0.7f) // 30% chance to manipulate each turbine
                 {
                     float randomSpeed = Random.Range(0f, turbine.maxSpeed * 1.5f); // Potentially exceed safe limits
-                    turbine.ToggleManualControl(true, randomSpeed);
+                    if (Random.value > 0.8f) { randomSpeed = 0f; } // 20% chance that, ignore the above and turn the turbine
+                    turbine.ToggleManualControl(true, randomSpeed); // Set manual control to true in order to parse a "false" speed
+                
+                    // Add this turbine to the set of currently manipulated turbines.
+                    manipulatedTurbines.Add(turbine);
                 }
             }
-            
-            yield return new WaitForSeconds(3f);
+
+            // Force visualiser to show yellow connections to indicate a turbine has been manipulated.
+            ForceVisualiserUpdate();
+
+            yield return new WaitForSeconds(3f); // Re-do every 3 seconds
         }
     }
     
@@ -335,6 +354,12 @@ public class CyberAttack : MonoBehaviour
                 }
             }
         }
+    }
+
+    // Method to check if a turbine is currently being manipulated
+    public bool IsTurbineManipulated(Turbine turbine)
+    {
+        return manipulatedTurbines.Contains(turbine);
     }
     
     // Clean up on destroy for sanity check

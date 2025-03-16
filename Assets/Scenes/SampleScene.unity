@@ -503,13 +503,13 @@ Transform:
   m_PrefabAsset: {fileID: 0}
   m_GameObject: {fileID: 330585543}
   serializedVersion: 2
-  m_LocalRotation: {x: 0.19193733, y: 0.6805587, z: -0.19193733, w: 0.6805587}
-  m_LocalPosition: {x: -26.4, y: 19.6, z: -3.2}
+  m_LocalRotation: {x: 0.24416271, y: 0.6636148, z: -0.24416271, w: 0.6636148}
+  m_LocalPosition: {x: -26.4, y: 19.93, z: -3.2}
   m_LocalScale: {x: 1, y: 1, z: 1}
   m_ConstrainProportionsScale: 0
   m_Children: []
   m_Father: {fileID: 0}
-  m_LocalEulerAnglesHint: {x: 31.5, y: 90, z: 0}
+  m_LocalEulerAnglesHint: {x: 40.4, y: 90, z: 0}
 --- !u!114 &330585547
 MonoBehaviour:
   m_ObjectHideFlags: 0
@@ -1678,6 +1678,7 @@ MonoBehaviour:
   insufficientPowerColor: {r: 1, g: 0.92156863, b: 0.015686275, a: 1}
   thinLineWidth: 0.1
   thickLineWidth: 0.35
+  cyberAttack: {fileID: 285245274}
 --- !u!4 &1075353698
 Transform:
   m_ObjectHideFlags: 0

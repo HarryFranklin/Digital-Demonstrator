@@ -100,7 +100,7 @@ public class PowerVisualiser : MonoBehaviour
                     currentPower = turbine.GetCurrentPower();
                     
                     // Check if this turbine is being manipulated during power generation attack
-                    // ONLY set isManipulated for turbine-to-windfarm connections
+                    // Only set isManipulated for turbine-to-windfarm connections
                     if (cyberAttack != null && cyberAttack.IsTurbineManipulated(turbine) && to.CompareTag("WindFarm"))
                     {
                         isManipulated = true;
@@ -110,6 +110,30 @@ public class PowerVisualiser : MonoBehaviour
             
             // Update the line
             CreateOrUpdateConnection(from, to, currentPower, requiredPower, isManipulated);
+        }
+    }
+
+    // Method to hide all connection lines
+    public void HideAllConnections()
+    {
+        foreach (var line in connectionLines.Values)
+        {
+            if (line != null)
+            {
+                line.enabled = false;
+            }
+        }
+    }
+
+    // Method to show all connection lines
+    public void ShowAllConnections()
+    {
+        foreach (var line in connectionLines.Values)
+        {
+            if (line != null)
+            {
+                line.enabled = true;
+            }
         }
     }
 }

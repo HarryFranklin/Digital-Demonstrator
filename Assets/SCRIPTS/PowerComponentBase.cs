@@ -7,6 +7,7 @@ public abstract class PowerComponentBase : MonoBehaviour, IPowerComponent
     public bool isOperational = true;
     protected float currentPower = 0f;
     public PowerVisualiser visualiser;
+    public bool visualisationEnabled = true;
     
     protected virtual void Awake()
     {
@@ -31,12 +32,15 @@ public abstract class PowerComponentBase : MonoBehaviour, IPowerComponent
     public abstract void VisualiseConnections();
 
     // Coroutine for updating visualisation every given time period
-    protected IEnumerator UpdateVisualisationRoutine(float updateInterval)
+    protected IEnumerator UpdateVisualisationRoutine(float interval)
     {
         while (true)
         {
-            VisualiseConnections();
-            yield return new WaitForSeconds(updateInterval);
+            if (visualisationEnabled)
+            {
+                VisualiseConnections();
+            }
+            yield return new WaitForSeconds(interval);
         }
     }
 }

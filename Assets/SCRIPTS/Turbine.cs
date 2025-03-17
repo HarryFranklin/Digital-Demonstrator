@@ -61,11 +61,21 @@ public class Turbine : PowerComponentBase
     {
         if (outputWindFarm != null && visualiser != null)
         {
-            // Check if this turbine is being manipulated during a power generation attack
             bool isManipulated = false;
             
-            // Use the visualiser's method to check if turbine is manipulated
+            // Check if this turbine is being manipulated in 2 ways:
+            // 1. Through the cyber attack system
             isManipulated = visualiser.IsTurbineManipulated(this);
+            
+            // 2. OR if it's under manual control and its speed is abnormal
+            if (manualControl) 
+            {
+                // Turbine is under manual control - check if speed is abnormal
+                // Consider a turbine abnormal if its speed is 0 or exceeds its normal max speed
+                if (manualWindSpeed == 0 || manualWindSpeed > maxSpeed) {
+                    isManipulated = true;
+                }
+            }
             
             visualiser.CreateOrUpdateConnection(gameObject, outputWindFarm.gameObject, currentPower, 0, isManipulated);
         }

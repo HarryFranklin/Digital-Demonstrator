@@ -187,26 +187,39 @@ public class CyberAttack : MonoBehaviour
     }
     
     // Monitoring Disruption Attack - Turn off monitoring
+    // Monitoring Disruption Attack - Turn off monitoring and visualizations
     public void ToggleMonitoringDisruptionAttack()
     {
-        if (powerSystemManager == null) return;
+        if (powerSystemManager == null || powerVisualiser == null) return;
         
         bool isActive = activeAttacks["MonitoringDisruption"];
         activeAttacks["MonitoringDisruption"] = !isActive;
         
         if (activeAttacks["MonitoringDisruption"])
         {
-            Debug.Log("Starting monitoring disruption attack - disabling system monitoring");
+            Debug.Log("Starting monitoring disruption attack - disabling system monitoring and visualization");
             // Disable the monitoring in PowerSystemManager
-            // powerSystemManager.debugMode = false;
+            powerSystemManager.debugMode = false;
+            
+            // Disable visualization by hiding all connection lines
+            HideAllConnectionLines();
+            
+            // Disable the visualization update coroutines in all components
+            ToggleComponentVisualisation(false);
             
             UpdateButtonState(monitoringDisruptionButton, true);
         }
         else
         {
-            Debug.Log("Stopping monitoring disruption attack - restoring system monitoring");
+            Debug.Log("Stopping monitoring disruption attack - restoring system monitoring and visualization");
             // Re-enable monitoring
             powerSystemManager.debugMode = true;
+            
+            // Show connection lines again
+            ShowAllConnectionLines();
+            
+            // Re-enable visualization update coroutines in all components
+            ToggleComponentVisualisation(true);
             
             UpdateButtonState(monitoringDisruptionButton, false);
         }
@@ -249,12 +262,90 @@ public class CyberAttack : MonoBehaviour
 
         UpdateButtonState(powerGenerationButton, activeAttacks["PowerGeneration"]);
     }
-    
+
+    // Helper method to hide all connection lines
+    private void HideAllConnectionLines()
+    {
+        if (powerVisualiser != null)
+        {
+            powerVisualiser.HideAllConnections();
+        }
+    }
+
+    // Helper method to show all connection lines
+    private void ShowAllConnectionLines()
+    {
+        if (powerVisualiser != null)
+        {
+            powerVisualiser.ShowAllConnections();
+            
+            // Force an update to restore all connections
+            ForceVisualiserUpdate();
+        }
+    }
+
+    // Method to toggle visualization in all power components
+    private void ToggleComponentVisualisation(bool enabled)
+    {
+        // Toggle visualization for turbines
+        foreach (var turbine in powerSystemManager.turbines)
+        {
+            if (turbine != null)
+            {
+                turbine.visualisationEnabled = enabled;
+            }
+        }
+        
+        // Toggle visualization for wind farm
+        if (powerSystemManager.windFarm != null)
+        {
+            powerSystemManager.windFarm.visualisationEnabled = enabled;
+        }
+        
+        // Toggle visualization for inverter
+        if (powerSystemManager.inverter != null)
+        {
+            powerSystemManager.inverter.visualisationEnabled = enabled;
+        }
+        
+        // Toggle visualization for transformer
+        if (powerSystemManager.transformer != null)
+        {
+            powerSystemManager.transformer.visualisationEnabled = enabled;
+        }
+        
+        // Toggle visualization for battery
+        if (powerSystemManager.battery != null)
+        {
+            powerSystemManager.battery.visualisationEnabled = enabled;
+        }
+        
+        // Toggle visualization for power grid
+        if (powerSystemManager.powerGrid != null)
+        {
+            powerSystemManager.powerGrid.visualisationEnabled = enabled;
+        }
+        
+        // Toggle visualization for consumers
+        foreach (var consumer in powerSystemManager.consumers)
+        {
+            if (consumer != null)
+            {
+                consumer.visualisationEnabled = enabled;
+            }
+        }
+    }    
     private IEnumerator RandomTurbineManipulation()
     {
+        // Keep track of previously manipulated turbines
+        HashSet<Turbine> previouslyManipulatedTurbines = new HashSet<Turbine>();
+        
         while (activeAttacks["PowerGeneration"])
         {
-            // Clear the previous set of manipulated turbines
+            // Store previously manipulated turbines before clearing
+            previouslyManipulatedTurbines = new HashSet<Turbine>(manipulatedTurbines);
+            
+            // Clear the current set of manipulated turbines
             manipulatedTurbines.Clear();
             
             foreach (var turbine in powerSystemManager.turbines)
@@ -262,18 +353,45 @@ public class CyberAttack : MonoBehaviour
                 if (turbine != null && Random.value > 0.7f) // 30% chance to manipulate each turbine
                 {
                     float randomSpeed = Random.Range(0f, turbine.maxSpeed * 1.5f); // Potentially exceed safe limits
-                    if (Random.value > 0.8f) { randomSpeed = 0f; } // 20% chance that, ignore the above and turn the turbine
-                    turbine.ToggleManualControl(true, randomSpeed); // Set manual control to true in order to parse a "false" speed
-                
-                    // Add this turbine to the set of currently manipulated turbines.
+                    if (Random.value > 0.8f) { randomSpeed = 0f; } // 20% chance to turn off the turbine
+                    turbine.ToggleManualControl(true, randomSpeed);
+                    
+                    // Add this turbine to the set of currently manipulated turbines
                     manipulatedTurbines.Add(turbine);
                 }
             }
 
-            // Force visualiser to show yellow connections to indicate a turbine has been manipulated.
-            ForceVisualiserUpdate();
+            // Instead of forcing update on all connections, only update the ones for turbines
+            // that have changed state (either newly manipulated or no longer manipulated)
+            UpdateChangedTurbineConnections(previouslyManipulatedTurbines);
 
             yield return new WaitForSeconds(3f); // Re-do every 3 seconds
+        }
+    }
+
+    // New method to only update connections for turbines that changed state
+    private void UpdateChangedTurbineConnections(HashSet<Turbine> previouslyManipulated)
+    {
+        if (powerVisualiser == null) return;
+        
+        // Find turbines that were manipulated before but aren't now
+        foreach (var turbine in previouslyManipulated)
+        {
+            if (turbine != null && !manipulatedTurbines.Contains(turbine))
+            {
+                // This turbine is no longer manipulated, update its connection
+                turbine.VisualiseConnections();
+            }
+        }
+        
+        // Find turbines that are now manipulated but weren't before
+        foreach (var turbine in manipulatedTurbines)
+        {
+            if (turbine != null && !previouslyManipulated.Contains(turbine))
+            {
+                // This is a newly manipulated turbine, update its connection
+                turbine.VisualiseConnections();
+            }
         }
     }
     

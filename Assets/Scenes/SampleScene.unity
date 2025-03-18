@@ -1935,7 +1935,7 @@ MonoBehaviour:
   insufficientPowerColor: {r: 1, g: 0.92156863, b: 0.015686275, a: 1}
   thinLineWidth: 0.1
   thickLineWidth: 0.35
-  cyberAttack: {fileID: 0}
+  cyberAttack: {fileID: 285245276}
 --- !u!4 &1075353698
 Transform:
   m_ObjectHideFlags: 0

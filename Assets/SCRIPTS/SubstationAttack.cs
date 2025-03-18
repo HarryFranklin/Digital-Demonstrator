@@ -10,8 +10,14 @@ public class SubstationAttack : CyberAttackBase
     // Variable to track the original operational state
     private bool originalOperationalState;
     
+    // Flag to track attack status for visualization
+    private bool isUnderAttack = false;
+    
     // Override for attack name
     public override string AttackName => "SubstationAttack";
+    
+    // Reference to the original VisualiseConnections method
+    private System.Delegate originalVisualiseMethod;
     
     public override void Initialise(PowerVisualiser visualiser, PowerSystemManager systemManager)
     {
@@ -40,8 +46,14 @@ public class SubstationAttack : CyberAttackBase
             // Disable the transformer
             targetTransformer.isOperational = false;
             
-            // Force an immediate visualisation update
-            targetTransformer.VisualiseConnections();
+            // Set attack flag to true
+            isUnderAttack = true;
+            
+            // Override the transformer's visualization method
+            targetTransformer.visualisationEnabled = false;
+            
+            // Apply our own visualization
+            StartCoroutine(AttackVisualisationRoutine());
         }
         else
         {
@@ -59,8 +71,48 @@ public class SubstationAttack : CyberAttackBase
             // Restore the original operational state
             targetTransformer.isOperational = originalOperationalState;
             
-            // Force an immediate visualisation update
-            targetTransformer.VisualiseConnections();
+            // Reset attack flag
+            isUnderAttack = false;
+            
+            // Re-enable transformer's original visualization
+            targetTransformer.visualisationEnabled = true;
+        }
+        
+        // Stop our visualization coroutine
+        StopAllCoroutines();
+    }
+    
+    // Coroutine to continuously update visualizations during attack
+    private IEnumerator AttackVisualisationRoutine()
+    {
+        while (isUnderAttack)
+        {
+            if (powerVisualiser != null && targetTransformer != null)
+            {
+                GameObject transformerObj = targetTransformer.gameObject;
+                
+                // Update connection to grid
+                if (targetTransformer.outputGrid != null)
+                {
+                    powerVisualiser.CreateOrUpdateConnection(
+                        transformerObj, 
+                        targetTransformer.outputGrid.gameObject, 
+                        0 // Force zero power during attack
+                    );
+                }
+                
+                // Update connection to battery
+                if (targetTransformer.outputBattery != null)
+                {
+                    powerVisualiser.CreateOrUpdateConnection(
+                        transformerObj, 
+                        targetTransformer.outputBattery.gameObject, 
+                        0 // Force zero power during attack
+                    );
+                }
+            }
+            
+            yield return new WaitForSeconds(0.05f); // Update slightly faster than transformer's routine
         }
     }
 }

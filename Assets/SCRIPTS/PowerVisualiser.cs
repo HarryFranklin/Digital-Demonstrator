@@ -9,7 +9,7 @@ public class PowerVisualiser : MonoBehaviour
     public Color insufficientPowerColor = Color.yellow; // For when the consumer isn't powered enough.
     public float thinLineWidth = 0.1f; // Turbine -> Farm, Grid -> Consumer
     public float thickLineWidth = 0.4f; // All other connections
-    public CyberAttack cyberAttack;
+    public CyberAttackManager cyberAttack;
     
     // Dict of 2 GO's (from and to) as key, lr as value.
     private Dictionary<(GameObject, GameObject), LineRenderer> connectionLines = new Dictionary<(GameObject, GameObject), LineRenderer>();

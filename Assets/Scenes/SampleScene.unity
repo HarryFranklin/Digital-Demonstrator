@@ -1936,6 +1936,11 @@ MonoBehaviour:
   thinLineWidth: 0.1
   thickLineWidth: 0.35
   cyberAttack: {fileID: 285245276}
+  greenDotSpeed: 1.5
+  yellowDotSpeed: 0.8
+  dotSize: 0.2
+  dotGap: 0.7
+  dotMaterial: {fileID: 2100000, guid: d2a188bb334939c45b193b7c7c7a143e, type: 2}
 --- !u!4 &1075353698
 Transform:
   m_ObjectHideFlags: 0

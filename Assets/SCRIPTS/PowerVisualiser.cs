@@ -6,134 +6,201 @@ public class PowerVisualiser : MonoBehaviour
 {
     public Color powerFlowingColor = Color.green;
     public Color noPowerColor = Color.red;
-    public Color insufficientPowerColor = Color.yellow; // For when the consumer isn't powered enough.
-    public float thinLineWidth = 0.1f; // Turbine -> Farm, Grid -> Consumer
-    public float thickLineWidth = 0.4f; // All other connections
+    public Color insufficientPowerColor = Color.yellow;
+    public float thinLineWidth = 0.1f;
+    public float thickLineWidth = 0.4f;
     public CyberAttackManager cyberAttack;
     
-    // Dict of 2 GO's (from and to) as key, lr as value.
-    private Dictionary<(GameObject, GameObject), LineRenderer> connectionLines = new Dictionary<(GameObject, GameObject), LineRenderer>();
+    // Dot animation settings
+    public float greenDotSpeed = 1.5f;
+    public float yellowDotSpeed = 0.8f;
+    public float dotSize = 0.3f;
+    public float dotGap = 0.7f;
+    public Material dotMaterial;
     
-    // Method to check if a turbine is being manipulated
-    public bool IsTurbineManipulated(Turbine turbine)
+    // Dictionary to track connections
+    private Dictionary<(GameObject, GameObject), PowerLineConnection> connections = 
+        new Dictionary<(GameObject, GameObject), PowerLineConnection>();
+    
+    // Simplified connection class
+    private class PowerLineConnection
     {
-        if (cyberAttack != null)
-        {
-            return cyberAttack.IsTurbineManipulated(turbine);
-        }
-        return false;
+        public List<GameObject> dots = new List<GameObject>();
+        public Vector3 start, end;
+        public float length;
+        public float offset = 0f;
+        public Color color;
     }
     
-    public LineRenderer CreateOrUpdateConnection(GameObject from, GameObject to, float power, float requiredPower = 0, bool isManipulated = false)
+    public bool IsTurbineManipulated(Turbine turbine) => 
+        cyberAttack != null && cyberAttack.IsTurbineManipulated(turbine);
+        // If cyberAttack script is there, and the cyber attack says the turbine is manipulated, it's manipulated
+    
+    void Update()
     {
+        foreach (var conn in connections.Values)
+        {
+            if (conn.color == noPowerColor || conn.dots.Count == 0) continue;
+            
+            // Update animation based on color
+            float speed = conn.color == powerFlowingColor ? greenDotSpeed : yellowDotSpeed;
+            conn.offset = (conn.offset + speed * Time.deltaTime) % (dotSize + dotGap);
+            
+            // Update dot positions based on post found online
+            float cycle = dotSize + dotGap;
+            for (int i = 0; i < conn.dots.Count; i++)
+            {
+                float position = (i * cycle + conn.offset) % conn.length;
+                if (conn.dots[i] != null)
+                {
+                    conn.dots[i].transform.position = Vector3.Lerp(
+                        conn.start, conn.end, position / conn.length);
+                }
+            }
+        }
+    }
+    
+    // Used to create or update a given connection, key into it using the from and to GO's.
+    public void CreateOrUpdateConnection(GameObject from, GameObject to, float power, float requiredPower = 0, bool isManipulated = false)
+    {
+        // Create key and prepare positions
         var key = (from, to);
-        LineRenderer line;
+        Vector3 start = from.transform.position;
+        Vector3 end = to.transform.position;
+        start.y = end.y = 0.5f;
         
-        // If connection doesn't exist, create it and add to dict
-        if (!connectionLines.TryGetValue(key, out line))
+        // Determine width and color
+        bool isThin = (from.CompareTag("WindTurbine") && to.CompareTag("WindFarm")) || 
+                      (from.CompareTag("PowerGrid") && to.CompareTag("PowerConsumer"));
+        float width = isThin ? thinLineWidth : thickLineWidth;
+        
+        Color color = noPowerColor;
+        if (power > 0)
         {
-            GameObject lineObj = new GameObject($"PowerLine_{from.name}_to_{to.name}");
-            lineObj.transform.SetParent(transform);
+            if (isManipulated || (requiredPower > 0 && power < requiredPower))
+                color = insufficientPowerColor;
+            else
+                color = powerFlowingColor;
+        }
+        
+        // Get or create connection
+        if (!connections.TryGetValue(key, out PowerLineConnection conn))
+        {
+            // Create new connection
+            conn = new PowerLineConnection {
+                start = start,
+                end = end,
+                length = Vector3.Distance(start, end),
+                color = color
+            };
             
-            line = lineObj.AddComponent<LineRenderer>();
-            line.positionCount = 2;
+            // Create parent object
+            GameObject parent = new GameObject($"PowerLine_{from.name}_to_{to.name}");
+            parent.transform.SetParent(transform);
             
-            connectionLines[key] = line;
-        }
-        
-        // Determine line thickness
-        bool isThinLine = (from.CompareTag("WindTurbine") && to.CompareTag("WindFarm")) || (from.CompareTag("PowerGrid") && to.CompareTag("PowerConsumer"));
-        line.startWidth = isThinLine ? thinLineWidth : thickLineWidth;
-        line.endWidth = isThinLine ? thinLineWidth : thickLineWidth;
-        
-        // Create variables and forcing Y value
-        Vector3 fromPos = from.transform.position;
-        Vector3 toPos = to.transform.position;
-        fromPos.y = 0.5f;
-        toPos.y = 0.5f;
-
-        // Update positions
-        line.SetPosition(0, fromPos);
-        line.SetPosition(1, toPos);
-
-        // Set color based on power flow and manipulation status
-        if (power <= 0)
-        {
-            line.material.color = noPowerColor;
-        }
-        else if (isManipulated)
-        {
-            // Use yellow for manipulated turbines
-            line.material.color = insufficientPowerColor;
-        }
-        else if (requiredPower > 0 && power < requiredPower)
-        {
-            line.material.color = insufficientPowerColor;
+            // Create dots
+            int numDots = Mathf.CeilToInt(conn.length / (dotSize + dotGap));
+            for (int i = 0; i < numDots; i++)
+            {
+                GameObject dot = CreateDot(parent.transform, width);
+                conn.dots.Add(dot);
+                
+                // Set initial position and color
+                float pos = (i * (dotSize + dotGap)) % conn.length;
+                dot.transform.position = Vector3.Lerp(start, end, pos / conn.length);
+                dot.GetComponent<Renderer>().material.color = color;
+            }
+            
+            connections[key] = conn;
         }
         else
         {
-            line.material.color = powerFlowingColor;
+            // Update existing connection
+            bool wasRed = conn.color == noPowerColor;
+            conn.start = start;
+            conn.end = end;
+            conn.length = Vector3.Distance(start, end);
+            
+            // Update colors and reset if needed
+            if (conn.color != color)
+            {
+                conn.color = color;
+                foreach (var dot in conn.dots)
+                {
+                    if (dot != null)
+                        dot.GetComponent<Renderer>().material.color = color;
+                }
+                
+                // Reset positions if changing from red to another color
+                if (wasRed && color != noPowerColor)
+                {
+                    conn.offset = 0f;
+                    float cycle = dotSize + dotGap;
+                    for (int i = 0; i < conn.dots.Count; i++)
+                    {
+                        float pos = (i * cycle) % conn.length;
+                        if (conn.dots[i] != null)
+                            conn.dots[i].transform.position = Vector3.Lerp(start, end, pos / conn.length);
+                    }
+                }
+            }
+        }
+    }
+    
+    private GameObject CreateDot(Transform parent, float size)
+    {
+        GameObject dot = GameObject.CreatePrimitive(PrimitiveType.Sphere);
+        dot.transform.SetParent(parent);
+        dot.transform.localScale = Vector3.one * size;
+        
+        if (dotMaterial != null)
+        {
+            Renderer renderer = dot.GetComponent<Renderer>();
+            renderer.material = new Material(dotMaterial);
         }
         
-        return line;
+        return dot;
     }
-
+    
     public void ForceUpdateAllConnections()
     {
-        foreach (var connectionEntry in connectionLines)
+        foreach (var keyValuePair in connections)
         {
-            var connection = connectionEntry.Key;
-            GameObject from = connection.Item1;
-            GameObject to = connection.Item2;
+            var key = keyValuePair.Key;
+            GameObject from = key.Item1;
+            GameObject to = key.Item2;
             
-            // Default values
-            float currentPower = 0;
-            float requiredPower = 0;
+            float power = 0f;
             bool isManipulated = false;
             
-            // Check if "from" is a turbine
+            // Different process for turbine to farm
             if (from.CompareTag("WindTurbine"))
             {
                 Turbine turbine = from.GetComponent<Turbine>();
                 if (turbine != null && turbine.isOperational)
                 {
-                    currentPower = turbine.GetCurrentPower();
-                    
-                    // Check if this turbine is being manipulated during power generation attack
-                    // Only set isManipulated for turbine-to-windfarm connections
-                    if (cyberAttack != null && cyberAttack.IsTurbineManipulated(turbine) && to.CompareTag("WindFarm"))
-                    {
-                        isManipulated = true;
-                    }
+                    power = turbine.GetCurrentPower();
+                    isManipulated = cyberAttack != null && 
+                        cyberAttack.IsTurbineManipulated(turbine) && 
+                        to.CompareTag("WindFarm");
                 }
             }
             
-            // Update the line
-            CreateOrUpdateConnection(from, to, currentPower, requiredPower, isManipulated);
+            CreateOrUpdateConnection(from, to, power, 0, isManipulated);
         }
     }
 
-    // Method to hide all connection lines
     public void HideAllConnections()
     {
-        foreach (var line in connectionLines.Values)
-        {
-            if (line != null)
-            {
-                line.enabled = false;
-            }
-        }
+        foreach (var conn in connections.Values)
+            foreach (var dot in conn.dots)
+                if (dot != null) dot.SetActive(false);
     }
 
-    // Method to show all connection lines
     public void ShowAllConnections()
     {
-        foreach (var line in connectionLines.Values)
-        {
-            if (line != null)
-            {
-                line.enabled = true;
-            }
-        }
+        foreach (var conn in connections.Values)
+            foreach (var dot in conn.dots)
+                if (dot != null) dot.SetActive(true);
     }
 }

@@ -53,7 +53,7 @@ public class Turbine : PowerComponentBase
         if (rotationPoint != null && pivot != null)
         {
             float rotationSpeed = Mathf.Clamp(speed, 0, maxSpeed);
-            rotationPoint.transform.RotateAround(pivot.transform.position, Vector3.forward, rotationSpeed * Time.deltaTime * 10);
+            rotationPoint.transform.RotateAround(pivot.transform.position, Vector3.right, rotationSpeed * Time.deltaTime * 10);
         }
     }
     

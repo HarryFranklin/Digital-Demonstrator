@@ -95,11 +95,16 @@ public class PowerVisualiser : MonoBehaviour
             };
             
             // Create parent object
-            GameObject parent = new GameObject($"PowerLine_{from.name}_to_{to.name}");
+            GameObject parent = new GameObject($"PowerLine_{from.name}_to_{to.name}"); // for easy naming in editor
             parent.transform.SetParent(transform);
             
-            // Create dots
-            int numDots = Mathf.CeilToInt(conn.length / (dotSize + dotGap));
+            // Calculate the number of dots that can fit on the line with proper spacing
+            float totalCycleLength = dotSize + dotGap;
+            int numDots = Mathf.FloorToInt(conn.length / totalCycleLength);
+
+            // Ensure at least one dot for very short connections
+            if (numDots <= 0 && conn.length > dotSize) { numDots = 1; }
+            
             for (int i = 0; i < numDots; i++)
             {
                 GameObject dot = CreateDot(parent.transform, width);

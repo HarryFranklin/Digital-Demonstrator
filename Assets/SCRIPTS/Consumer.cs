@@ -9,6 +9,9 @@ public class Consumer : PowerComponentBase
     private float receivedPower = 0f;
     private bool isPowerShortage = false;
     
+    [HideInInspector] // Hide this in the but keep it accessible via code
+    public float currentPower { get; private set; }
+    
     protected override void Awake()
     {
         base.Awake();

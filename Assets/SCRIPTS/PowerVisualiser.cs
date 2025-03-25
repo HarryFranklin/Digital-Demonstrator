@@ -1,169 +1,214 @@
-using System.Collections;
 using System.Collections.Generic;
 using UnityEngine;
+using System.Linq;
 
 public class PowerVisualiser : MonoBehaviour
 {
-    public Color powerFlowingColor = Color.green;
-    public Color noPowerColor = Color.red;
-    public Color insufficientPowerColor = Color.yellow;
-    public float thinLineWidth = 0.1f;
-    public float thickLineWidth = 0.4f;
+    [System.Serializable]
+    private class DotSettings
+    {
+        public Color powerFlowingColor = Color.green;
+        public Color noPowerColor = Color.red;
+        public Color insufficientPowerColor = Color.yellow;
+        public float size = 0.3f;
+        public float spacing = 1f;
+        public float greenSpeed = 1.5f;
+        public float yellowSpeed = 0.8f;
+        public Material material;
+    }
+
+    [System.Serializable]
+    private class LineSettings
+    {
+        public float thinWidth = 0.1f;
+        public float thickWidth = 0.4f;
+    }
+
+    [SerializeField] private DotSettings dotSettings = new DotSettings();
+    [SerializeField] private LineSettings lineSettings = new LineSettings();
+    [SerializeField] private bool showStationaryDotsOnNoPower = true;
     public CyberAttackManager cyberAttack;
-    
-    // Dot animation settings
-    public float greenDotSpeed = 1.5f;
-    public float yellowDotSpeed = 0.8f;
-    public float dotSize = 0.3f;
-    public float dotGap = 0.7f;
-    public Material dotMaterial;
-    
-    // Dictionary to track connections
-    private Dictionary<(GameObject, GameObject), PowerLineConnection> connections = 
-        new Dictionary<(GameObject, GameObject), PowerLineConnection>();
-    
-    // Simplified connection class
-    private class PowerLineConnection
+
+    // Public structures to allow external modification by attacks
+    public Color powerFlowingColor 
+    { 
+        get => dotSettings.powerFlowingColor; 
+        set => dotSettings.powerFlowingColor = value; 
+    }
+    public Color noPowerColor 
+    { 
+        get => dotSettings.noPowerColor; 
+        set => dotSettings.noPowerColor = value; 
+    }
+    public Color insufficientPowerColor 
+    { 
+        get => dotSettings.insufficientPowerColor; 
+        set => dotSettings.insufficientPowerColor = value; 
+    }
+
+    private Dictionary<(GameObject, GameObject), ConnectionData> connections = new Dictionary<(GameObject, GameObject), ConnectionData>();
+
+    private class ConnectionData
     {
         public List<GameObject> dots = new List<GameObject>();
         public Vector3 start, end;
         public float length;
-        public float offset = 0f;
+        public float offset;
         public Color color;
     }
-    
+
     public bool IsTurbineManipulated(Turbine turbine) => 
         cyberAttack != null && cyberAttack.IsTurbineManipulated(turbine);
-        // If cyberAttack script is there, and the cyber attack says the turbine is manipulated, it's manipulated
-    
+
     void Update()
     {
         foreach (var conn in connections.Values)
         {
-            if (conn.color == noPowerColor || conn.dots.Count == 0) continue;
-            
-            // Update animation based on color
-            float speed = conn.color == powerFlowingColor ? greenDotSpeed : yellowDotSpeed;
-            conn.offset = (conn.offset + speed * Time.deltaTime) % (dotSize + dotGap);
-            
-            // Update dot positions based on post found online
-            float cycle = dotSize + dotGap;
+            // Skip entirely if no power and configured to hide dots
+            if (!showStationaryDotsOnNoPower && conn.color == dotSettings.noPowerColor)
+                continue;
+
+            // Skip animation if no power, but keep dots visible
+            if (conn.color == dotSettings.noPowerColor)
+                continue;
+
+            float speed = conn.color == dotSettings.powerFlowingColor ? dotSettings.greenSpeed : dotSettings.yellowSpeed;
+            float totalCycleLength = dotSettings.size + dotSettings.spacing;
+            conn.offset = (conn.offset + speed * Time.deltaTime) % totalCycleLength;
+
             for (int i = 0; i < conn.dots.Count; i++)
             {
-                float position = (i * cycle + conn.offset) % conn.length;
-                if (conn.dots[i] != null)
-                {
-                    conn.dots[i].transform.position = Vector3.Lerp(
-                        conn.start, conn.end, position / conn.length);
-                }
+                if (conn.dots[i] == null) continue;
+                float distanceAlongLine = (i * totalCycleLength + conn.offset) % conn.length;
+                conn.dots[i].transform.position = Vector3.Lerp(conn.start, conn.end, distanceAlongLine / conn.length);
             }
         }
     }
-    
-    // Used to create or update a given connection, key into it using the from and to GO's.
+
+    private Vector3 FindWindFarmCenter(GameObject windFarm) =>
+        windFarm.GetComponentsInChildren<Turbine>() is var turbines && turbines.Length > 0
+            ? turbines.Select(t => t.transform.position).Aggregate((a, b) => a + b) / turbines.Length
+            : windFarm.transform.position;
+
     public void CreateOrUpdateConnection(GameObject from, GameObject to, float power, float requiredPower = 0, bool isManipulated = false)
     {
-        // Create key and prepare positions
         var key = (from, to);
         Vector3 start = from.transform.position;
         Vector3 end = to.transform.position;
-        start.y = end.y = 0.5f;
-        
-        // Determine width and color
+
+        // Special handling for turbine to wind farm
+        if (from.CompareTag("WindTurbine") && to.CompareTag("WindFarm"))
+        {
+            start.y = 0.5f;
+            end = FindWindFarmCenter(to);
+        }
+        else
+        {
+            start.y = end.y = 0.5f;
+        }
+
+        // Determine line properties
         bool isThin = (from.CompareTag("WindTurbine") && to.CompareTag("WindFarm")) || 
                       (from.CompareTag("PowerGrid") && to.CompareTag("PowerConsumer"));
-        float width = isThin ? thinLineWidth : thickLineWidth;
-        
-        Color color = noPowerColor;
-        if (power > 0)
-        {
-            if (isManipulated || (requiredPower > 0 && power < requiredPower))
-                color = insufficientPowerColor;
-            else
-                color = powerFlowingColor;
-        }
-        
+        float width = isThin ? lineSettings.thinWidth : lineSettings.thickWidth;
+
+        // Determine color
+        Color color = power <= 0 ? dotSettings.noPowerColor :
+            (isManipulated || (requiredPower > 0 && power < requiredPower)) 
+                ? dotSettings.insufficientPowerColor 
+                : dotSettings.powerFlowingColor;
+
         // Get or create connection
-        if (!connections.TryGetValue(key, out PowerLineConnection conn))
+        if (!connections.TryGetValue(key, out ConnectionData conn))
         {
-            // Create new connection
-            conn = new PowerLineConnection {
+            conn = new ConnectionData {
                 start = start,
                 end = end,
                 length = Vector3.Distance(start, end),
                 color = color
             };
-            
-            // Create parent object
-            GameObject parent = new GameObject($"PowerLine_{from.name}_to_{to.name}"); // for easy naming in editor
-            parent.transform.SetParent(transform);
-            
-            // Calculate the number of dots that can fit on the line with proper spacing
-            float totalCycleLength = dotSize + dotGap;
-            int numDots = Mathf.FloorToInt(conn.length / totalCycleLength);
 
-            // Ensure at least one dot for very short connections
-            if (numDots <= 0 && conn.length > dotSize) { numDots = 1; }
-            
-            for (int i = 0; i < numDots; i++)
+            GameObject parent = new GameObject($"PowerLine_{from.name}_to_{to.name}");
+            parent.transform.SetParent(transform);
+
+            // Only create dots if not configured to hide on no power
+            if (!(color == dotSettings.noPowerColor && !showStationaryDotsOnNoPower))
             {
-                GameObject dot = CreateDot(parent.transform, width);
-                conn.dots.Add(dot);
-                
-                // Set initial position and color
-                float pos = (i * (dotSize + dotGap)) % conn.length;
-                dot.transform.position = Vector3.Lerp(start, end, pos / conn.length);
-                dot.GetComponent<Renderer>().material.color = color;
+                int numDots = Mathf.Max(1, Mathf.CeilToInt(conn.length / (dotSettings.size + dotSettings.spacing)));
+                float actualSpacing = (conn.length - (numDots * dotSettings.size)) / (numDots - 1);
+
+                for (int i = 0; i < numDots; i++)
+                {
+                    GameObject dot = CreateDot(parent.transform, width);
+                    conn.dots.Add(dot);
+
+                    float distanceAlongLine = i * (dotSettings.size + actualSpacing);
+                    dot.transform.position = Vector3.Lerp(start, end, distanceAlongLine / conn.length);
+                    dot.GetComponent<Renderer>().material.color = color;
+                }
             }
-            
+
             connections[key] = conn;
         }
         else
         {
-            // Update existing connection
-            bool wasRed = conn.color == noPowerColor;
-            conn.start = start;
-            conn.end = end;
-            conn.length = Vector3.Distance(start, end);
-            
-            // Update colors and reset if needed
-            if (conn.color != color)
-            {
-                conn.color = color;
-                foreach (var dot in conn.dots)
-                {
-                    if (dot != null)
-                        dot.GetComponent<Renderer>().material.color = color;
-                }
-                
-                // Reset positions if changing from red to another color
-                if (wasRed && color != noPowerColor)
-                {
-                    conn.offset = 0f;
-                    float cycle = dotSize + dotGap;
-                    for (int i = 0; i < conn.dots.Count; i++)
-                    {
-                        float pos = (i * cycle) % conn.length;
-                        if (conn.dots[i] != null)
-                            conn.dots[i].transform.position = Vector3.Lerp(start, end, pos / conn.length);
-                    }
-                }
-            }
+            UpdateExistingConnection(conn, start, end, color);
         }
     }
-    
+
+    private void UpdateExistingConnection(ConnectionData conn, Vector3 start, Vector3 end, Color color)
+    {
+        conn.start = start;
+        conn.end = end;
+        conn.length = Vector3.Distance(start, end);
+
+        // Handle dot creation/removal based on no power setting
+        if (color == dotSettings.noPowerColor && !showStationaryDotsOnNoPower)
+        {
+            // Destroy existing dots
+            foreach (var dot in conn.dots)
+                if (dot != null) Destroy(dot);
+            conn.dots.Clear();
+        }
+        else if (conn.dots.Count == 0 && color == dotSettings.noPowerColor)
+        {
+            // Recreate dots if they were removed and now showing stationary dots
+            int numDots = Mathf.Max(1, Mathf.CeilToInt(conn.length / (dotSettings.size + dotSettings.spacing)));
+            float actualSpacing = (conn.length - (numDots * dotSettings.size)) / (numDots - 1);
+
+            GameObject parent = new GameObject($"PowerLine_Restored");
+            parent.transform.SetParent(transform);
+
+            for (int i = 0; i < numDots; i++)
+            {
+                GameObject dot = CreateDot(parent.transform, lineSettings.thinWidth);
+                conn.dots.Add(dot);
+
+                float distanceAlongLine = i * (dotSettings.size + actualSpacing);
+                dot.transform.position = Vector3.Lerp(start, end, distanceAlongLine / conn.length);
+                dot.GetComponent<Renderer>().material.color = color;
+            }
+        }
+        else if (conn.color != color)
+        {
+            conn.color = color;
+            foreach (var dot in conn.dots.Where(d => d != null))
+                dot.GetComponent<Renderer>().material.color = color;
+        }
+    }
+
     private GameObject CreateDot(Transform parent, float size)
     {
         GameObject dot = GameObject.CreatePrimitive(PrimitiveType.Sphere);
         dot.transform.SetParent(parent);
         dot.transform.localScale = Vector3.one * size;
-        
-        if (dotMaterial != null)
+
+        if (dotSettings.material != null)
         {
             Renderer renderer = dot.GetComponent<Renderer>();
-            renderer.material = new Material(dotMaterial);
+            renderer.material = new Material(dotSettings.material);
         }
-        
+
         return dot;
     }
     
@@ -195,6 +240,7 @@ public class PowerVisualiser : MonoBehaviour
         }
     }
 
+    // Below methods used in Monitoring attack
     public void HideAllConnections()
     {
         foreach (var conn in connections.Values)

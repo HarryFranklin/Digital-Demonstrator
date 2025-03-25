@@ -3088,10 +3088,10 @@ MonoBehaviour:
     powerFlowingColor: {r: 0, g: 1, b: 0, a: 1}
     noPowerColor: {r: 1, g: 0, b: 0, a: 1}
     insufficientPowerColor: {r: 1, g: 0.92156863, b: 0.015686275, a: 1}
-    size: 0.3
+    size: 0.5
     spacing: 1
-    greenSpeed: 1.8
-    yellowSpeed: 1.3
+    greenSpeed: 2.2
+    yellowSpeed: 1.6
     material: {fileID: 10754, guid: 0000000000000000f000000000000000, type: 0}
   lineSettings:
     thinWidth: 0.1
@@ -4313,13 +4313,13 @@ Transform:
   m_PrefabAsset: {fileID: 0}
   m_GameObject: {fileID: 1439569850}
   serializedVersion: 2
-  m_LocalRotation: {x: -0, y: 0.13052596, z: -0, w: 0.99144495}
-  m_LocalPosition: {x: 38.26306, y: 0.5, z: 49.244164}
+  m_LocalRotation: {x: -0, y: 0.7071057, z: -0, w: 0.7071079}
+  m_LocalPosition: {x: 19.59, y: 0.5, z: 71.48}
   m_LocalScale: {x: 1, y: 1, z: 1}
   m_ConstrainProportionsScale: 0
   m_Children: []
   m_Father: {fileID: 0}
-  m_LocalEulerAnglesHint: {x: 0, y: 15, z: 0}
+  m_LocalEulerAnglesHint: {x: 0, y: 90, z: 0}
 --- !u!1001 &1451709146
 PrefabInstance:
   m_ObjectHideFlags: 0

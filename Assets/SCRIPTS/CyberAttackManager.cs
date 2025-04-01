@@ -9,6 +9,7 @@ public class CyberAttackManager : MonoBehaviour
     [Header("Management System and Visualiser")]
     public PowerVisualiser powerVisualiser;
     public PowerSystemManager powerSystemManager;
+    public PowerStatusIndicatorManager powerStatusIconManager;
     
     [Header("Attack Controls")]
     public Button visualDisruptionButton;
@@ -58,6 +59,7 @@ public class CyberAttackManager : MonoBehaviour
         
         // Monitoring Disruption Attack
         MonitoringDisruptionAttack monitoringDisruptionAttack = gameObject.AddComponent<MonitoringDisruptionAttack>();
+        monitoringDisruptionAttack.powerStatusIndicator = powerStatusIconManager;
         attacks.Add(monitoringDisruptionAttack.AttackName, monitoringDisruptionAttack);
         
         // Power Generation Attack

@@ -3,6 +3,12 @@ using UnityEngine;
 public class MonitoringDisruptionAttack : CyberAttackBase
 {
     public override string AttackName => "MonitoringDisruption";
+    public PowerStatusIndicatorManager powerStatusIndicator;
+    
+    private void Start()
+    {
+        
+    }
     
     protected override void StartAttack()
     {
@@ -17,6 +23,13 @@ public class MonitoringDisruptionAttack : CyberAttackBase
         
         // Disable the visualisation update coroutines in all components
         ToggleComponentVisualisation(false);
+        
+        // Disable the power status indicator
+        if (powerStatusIndicator != null)
+        {
+            powerStatusIndicator.gameObject.SetActive(false);
+            Debug.Log("Disabled PowerStatusIndicatorManager as part of monitoring disruption attack");
+        }
     }
     
     protected override void StopAttack()
@@ -32,6 +45,13 @@ public class MonitoringDisruptionAttack : CyberAttackBase
         
         // Re-enable visualisation update coroutines in all components
         ToggleComponentVisualisation(true);
+        
+        // Re-enable the power status indicator
+        if (powerStatusIndicator != null)
+        {
+            powerStatusIndicator.gameObject.SetActive(true);
+            Debug.Log("Re-enabled PowerStatusIndicatorManager after stopping monitoring disruption attack");
+        }
     }
     
     // Helper method to hide all connection lines

@@ -9,13 +9,13 @@ public class SubstationAttack : CyberAttackBase
     private bool originalOperationalState;
     private float batteryPowerOutput = 0f;
     private const float POWER_THRESHOLD = 0.01f;
-    
+
     public override string AttackName => "SubstationAttack";
-    
+
     public override void Initialise(PowerVisualiser visualiser, PowerSystemManager systemManager)
     {
         base.Initialise(visualiser, systemManager);
-        
+
         if (systemManager?.transformer != null)
         {
             targetTransformer = systemManager.transformer;
@@ -27,7 +27,7 @@ public class SubstationAttack : CyberAttackBase
             Debug.LogError("SubstationAttack: Transformer not found");
         }
     }
-    
+
     protected override void StartAttack()
     {
         if (targetTransformer == null)
@@ -35,90 +35,37 @@ public class SubstationAttack : CyberAttackBase
             isActive = false;
             return;
         }
-        
-        // Create battery connection before disabling transformer
-        if (powerVisualiser != null && backupBattery != null && targetGrid != null)
+
+        // Save state
+        originalOperationalState = targetTransformer.isOperational;
+
+        // Disable transformer
+        targetTransformer.isOperational = false;
+        targetTransformer.visualisationEnabled = false;
+
+        // Set transformer-to-grid connection to red (no power)
+        if (powerVisualiser != null && targetTransformer.gameObject != null && targetGrid != null)
+        {
+            powerVisualiser.CreateOrUpdateConnection(
+                targetTransformer.gameObject,
+                targetGrid.gameObject,
+                0f // No power flowing
+            );
+        }
+
+        // Provide battery backup power if available
+        if (backupBattery != null && targetGrid != null)
         {
             float currentDemand = targetGrid.GetTotalDemand();
             batteryPowerOutput = currentDemand > POWER_THRESHOLD ? currentDemand : 0f;
-            
-            powerVisualiser.CreateOrUpdateConnection(
-                backupBattery.gameObject,
-                targetGrid.gameObject,
-                batteryPowerOutput
-            );
-        }
-        
-        // Disable transformer
-        originalOperationalState = targetTransformer.isOperational;
-        targetTransformer.isOperational = false;
-        targetTransformer.visualisationEnabled = false;
-        
-        // Transfer power from battery to grid
-        if (backupBattery != null && targetGrid != null && batteryPowerOutput > 0)
-        {
-            backupBattery.RequestPower(batteryPowerOutput);
-            targetGrid.ReceivePower(backupBattery, batteryPowerOutput);
-        }
-        
-        StartCoroutine(AttackRoutine());
-    }
-    
-    protected override void StopAttack()
-    {
-        StopAllCoroutines();
-        
-        // Check for destroyed objects before accessing
-        if (targetTransformer != null)
-        {
-            targetTransformer.isOperational = originalOperationalState;
-            targetTransformer.visualisationEnabled = true;
-        }
-        
-        // Clear battery connection safely
-        if (powerVisualiser != null && backupBattery != null && targetGrid != null)
-        {
-            // Check if objects are still valid before creating connections
-            if (backupBattery != null && !ReferenceEquals(backupBattery, null) && 
-                targetGrid != null && !ReferenceEquals(targetGrid, null))
-            {
-                if (backupBattery.gameObject != null && targetGrid.gameObject != null)
-                {
-                    powerVisualiser.CreateOrUpdateConnection(
-                        backupBattery.gameObject,
-                        targetGrid.gameObject,
-                        0f
-                    );
-                }
-            }
-        }
-    }
-    
-    private IEnumerator AttackRoutine()
-    {
-        while (isActive)
-        {
-            // Safely check for destroyed objects
-            if (backupBattery == null || targetGrid == null || powerVisualiser == null)
-            {
-                isActive = false;
-                yield break;
-            }
-            
-            // Update power flow and visualisation
-            float gridDemand = targetGrid.GetTotalDemand();
-            batteryPowerOutput = (gridDemand > POWER_THRESHOLD && backupBattery.GetChargePercentage() > 0) 
-                ? gridDemand : 0f;
-            
-            // Update power transfer
-            if (batteryPowerOutput > 0)
+
+            if (batteryPowerOutput > 0f)
             {
                 backupBattery.RequestPower(batteryPowerOutput);
                 targetGrid.ReceivePower(backupBattery, batteryPowerOutput);
             }
-            
-            // Update visualisation if objects still exist
-            if (backupBattery.gameObject != null && targetGrid.gameObject != null)
+
+            if (powerVisualiser != null)
             {
                 powerVisualiser.CreateOrUpdateConnection(
                     backupBattery.gameObject,
@@ -126,7 +73,84 @@ public class SubstationAttack : CyberAttackBase
                     batteryPowerOutput
                 );
             }
-            
+        }
+
+        StartCoroutine(AttackRoutine());
+    }
+
+    protected override void StopAttack()
+    {
+        StopAllCoroutines();
+
+        // Restore transformer state
+        if (targetTransformer != null)
+        {
+            targetTransformer.isOperational = originalOperationalState;
+            targetTransformer.visualisationEnabled = true;
+        }
+
+        // Clear transformer and battery connections
+        if (powerVisualiser != null)
+        {
+            if (targetTransformer != null && targetGrid != null)
+            {
+                powerVisualiser.CreateOrUpdateConnection(
+                    targetTransformer.gameObject,
+                    targetGrid.gameObject,
+                    targetTransformer.isOperational ? targetTransformer.GetCurrentPower() : 0f
+                );
+            }
+
+            if (backupBattery != null && targetGrid != null)
+            {
+                powerVisualiser.CreateOrUpdateConnection(
+                    backupBattery.gameObject,
+                    targetGrid.gameObject,
+                    0f
+                );
+            }
+        }
+    }
+
+    private IEnumerator AttackRoutine()
+    {
+        while (isActive)
+        {
+            if (backupBattery == null || targetGrid == null || powerVisualiser == null)
+            {
+                isActive = false;
+                yield break;
+            }
+
+            float gridDemand = targetGrid.GetTotalDemand();
+            batteryPowerOutput = (gridDemand > POWER_THRESHOLD && backupBattery.GetChargePercentage() > 0)
+                ? gridDemand : 0f;
+
+            if (batteryPowerOutput > 0f)
+            {
+                backupBattery.RequestPower(batteryPowerOutput);
+                targetGrid.ReceivePower(backupBattery, batteryPowerOutput);
+            }
+
+            // Keep transformer output visual red
+            if (targetTransformer != null && targetGrid != null)
+            {
+                powerVisualiser.CreateOrUpdateConnection(
+                    targetTransformer.gameObject,
+                    targetGrid.gameObject,
+                    0f
+                );
+            }
+
+            if (backupBattery != null && targetGrid != null)
+            {
+                powerVisualiser.CreateOrUpdateConnection(
+                    backupBattery.gameObject,
+                    targetGrid.gameObject,
+                    batteryPowerOutput
+                );
+            }
+
             yield return new WaitForSeconds(0.1f);
         }
     }

@@ -20,6 +20,7 @@ public class PowerVisualiser : MonoBehaviour
     [SerializeField] private VisualSettings visualSettings = new VisualSettings();
     [SerializeField] private bool showDotsWhenNoPower = false;
     [SerializeField] private GameObject dotPrefab; // Prefab for sphere with no collider/shadows for better efficiency
+    [SerializeField] private float initialVisibilityDelay = 2.0f; // Wait 2 seconds before showing connections
     public CyberAttackManager cyberAttack;
 
     // Public properties for attack modifications
@@ -43,6 +44,12 @@ public class PowerVisualiser : MonoBehaviour
 
     public bool IsTurbineManipulated(Turbine turbine) => 
         cyberAttack != null && cyberAttack.IsTurbineManipulated(turbine);
+
+    void Start()
+    {
+        // Make sure all connections are hidden at start
+        HideAllConnections();
+    }
 
     void Update()
     {
@@ -224,7 +231,7 @@ public class PowerVisualiser : MonoBehaviour
                     renderer.material.color = color;
                 }
                 
-                // Update visibility based on power status
+                // Set visibility based on power status
                 dot.SetActive(color != visualSettings.noPowerColor || showDotsWhenNoPower);
             }
         }
@@ -303,6 +310,10 @@ public class PowerVisualiser : MonoBehaviour
                                           List<(GameObject from, GameObject to, float power, float requiredPower)> stage2,
                                           List<(GameObject from, GameObject to, float power, float requiredPower)> stage3)
     {
+        // Hide all connections at start
+        HideAllConnections();
+        
+        // Use the original coroutine but keep connections hidden until the delay
         StartCoroutine(StageConnectionCoroutine(stage1, stage2, stage3));
     }
 
@@ -310,18 +321,28 @@ public class PowerVisualiser : MonoBehaviour
                                                 List<(GameObject, GameObject, float, float)> stage2,
                                                 List<(GameObject, GameObject, float, float)> stage3)
     {
-        // Hide all at start
-        HideAllConnections();
-
         yield return null; // Wait a frame to let objects initialise
         
         CreateStage(stage1);
-        yield return new WaitForSeconds(0.1f); // Or 1 frame if you want instant
+        yield return new WaitForSeconds(0.1f);
 
         CreateStage(stage2);
         yield return new WaitForSeconds(0.1f);
 
         CreateStage(stage3);
+        
+        // Do a couple of updates to make sure everything is positioned correctly
+        ForceUpdateAllConnections();
+        yield return new WaitForSeconds(0.1f);
+        ForceUpdateAllConnections();
+        
+        // Wait for the specified delay before showing connections
+        yield return new WaitForSeconds(initialVisibilityDelay);
+        
+        // Do one final update before showing
+        ForceUpdateAllConnections();
+        
+        // Now show all connections
         ShowAllConnections();
     }
 

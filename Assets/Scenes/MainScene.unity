@@ -3981,6 +3981,7 @@ MonoBehaviour:
     slowFlowSpeed: 1.5
   showDotsWhenNoPower: 1
   dotPrefab: {fileID: 3331365306789828279, guid: f8c0d593b07c852479765e43dd9cb06d, type: 3}
+  initialVisibilityDelay: 1
   cyberAttack: {fileID: 285245276}
 --- !u!4 &1075353698
 Transform:

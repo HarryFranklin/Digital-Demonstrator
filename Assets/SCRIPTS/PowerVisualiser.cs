@@ -20,7 +20,6 @@ public class PowerVisualiser : MonoBehaviour
     [SerializeField] private VisualSettings visualSettings = new VisualSettings();
     [SerializeField] private bool showDotsWhenNoPower = false;
     [SerializeField] private GameObject dotPrefab; // Prefab for sphere with no collider/shadows for better efficiency
-    [SerializeField] private float pathElevation = 10.0f; // Height above terrain for dot paths
     public CyberAttackManager cyberAttack;
 
     // Public properties for attack modifications
@@ -106,10 +105,6 @@ public class PowerVisualiser : MonoBehaviour
         {
             start.y = end.y = 0.5f;
         }
-
-        // Elevate the start and end points to ensure dots are above terrain
-        start.y += pathElevation;
-        end.y += pathElevation;
 
         // Determine if this is a secondary connection
         bool isSecondary = (from.CompareTag("WindTurbine") && to.CompareTag("WindFarm")) || 

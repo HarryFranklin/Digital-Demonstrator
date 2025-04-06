@@ -6477,7 +6477,6 @@ MonoBehaviour:
     slowFlowSpeed: 1.5
   showDotsWhenNoPower: 1
   dotPrefab: {fileID: 3331365306789828279, guid: f8c0d593b07c852479765e43dd9cb06d, type: 3}
-  pathElevation: 2
   cyberAttack: {fileID: 285245276}
 --- !u!4 &1075353698
 Transform:
@@ -14722,7 +14721,7 @@ PrefabInstance:
       objectReference: {fileID: 0}
     - target: {fileID: 7689067408570059899, guid: 548219af97f4ce841b649a0566b266b8, type: 3}
       propertyPath: m_LocalPosition.x
-      value: 95
+      value: 81
       objectReference: {fileID: 0}
     - target: {fileID: 7689067408570059899, guid: 548219af97f4ce841b649a0566b266b8, type: 3}
       propertyPath: m_LocalPosition.y
@@ -15401,7 +15400,7 @@ PrefabInstance:
       objectReference: {fileID: 0}
     - target: {fileID: 1602861170254856431, guid: 9c06cb55d5215a2499092c46c1680cc5, type: 3}
       propertyPath: m_LocalPosition.x
-      value: 65
+      value: 14
       objectReference: {fileID: 0}
     - target: {fileID: 1602861170254856431, guid: 9c06cb55d5215a2499092c46c1680cc5, type: 3}
       propertyPath: m_LocalPosition.y

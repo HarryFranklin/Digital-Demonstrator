@@ -709,6 +709,7 @@ MonoBehaviour:
   m_EditorClassIdentifier: 
   powerVisualiser: {fileID: 1075353697}
   powerSystemManager: {fileID: 1337818259}
+  powerStatusIconManager: {fileID: 0}
   visualDisruptionButton: {fileID: 406355342}
   safetyOverrideButton: {fileID: 1944547397}
   monitoringDisruptionButton: {fileID: 1328577081}
@@ -2875,17 +2876,17 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 927275bd3d0c88340abc9fa9db66657f, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
-  powerFlowingColor: {r: 0, g: 1, b: 0, a: 1}
-  noPowerColor: {r: 1, g: 0, b: 0, a: 1}
-  insufficientPowerColor: {r: 1, g: 0.92156863, b: 0.015686275, a: 1}
-  thinLineWidth: 0.1
-  thickLineWidth: 0.35
+  visualSettings:
+    powerFlowingColor: {r: 0, g: 1, b: 0, a: 1}
+    noPowerColor: {r: 1, g: 0, b: 0, a: 1}
+    insufficientPowerColor: {r: 1, g: 0.92156863, b: 0.015686275, a: 1}
+    dotSize: 0.3
+    smallDotSize: 0.15
+    flowSpeed: 1.5
+    slowFlowSpeed: 0.8
+  showDotsWhenNoPower: 0
+  dotPrefab: {fileID: 0}
   cyberAttack: {fileID: 285245276}
-  greenDotSpeed: 1.5
-  yellowDotSpeed: 0.8
-  dotSize: 0.2
-  dotGap: 0.7
-  dotMaterial: {fileID: 2100000, guid: d2a188bb334939c45b193b7c7c7a143e, type: 2}
 --- !u!4 &1075353698
 Transform:
   m_ObjectHideFlags: 0

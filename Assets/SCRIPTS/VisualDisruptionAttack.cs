@@ -16,6 +16,20 @@ public class VisualDisruptionAttack : CyberAttackBase
     private Color originalNoPowerColor;
     private Color originalInsufficientPowerColor;
     
+    // Reference to status indicator manager (will be set during initialization)
+    private PowerStatusIndicatorManager statusIndicator;
+    
+    // Store original status icon sprites
+    private Sprite originalWarningSprite;
+    private Sprite originalCriticalSprite;
+    private Sprite originalGoodSprite;
+    
+    // Method to set the status indicator reference from CyberAttackManager
+    public void SetPowerStatusIndicator(PowerStatusIndicatorManager indicatorManager)
+    {
+        statusIndicator = indicatorManager;
+    }
+    
     public override void Initialise(PowerVisualiser visualiser, PowerSystemManager systemManager)
     {
         base.Initialise(visualiser, systemManager);
@@ -34,6 +48,14 @@ public class VisualDisruptionAttack : CyberAttackBase
             originalPowerFlowingColor = powerVisualiser.powerFlowingColor;
             originalNoPowerColor = powerVisualiser.noPowerColor;
             originalInsufficientPowerColor = powerVisualiser.insufficientPowerColor;
+        }
+        
+        // Store original sprites if status indicator is set
+        if (statusIndicator != null)
+        {
+            originalWarningSprite = statusIndicator.warningSprite;
+            originalCriticalSprite = statusIndicator.criticalSprite;
+            originalGoodSprite = statusIndicator.goodSprite;
         }
     }
     
@@ -60,6 +82,17 @@ public class VisualDisruptionAttack : CyberAttackBase
         powerVisualiser.noPowerColor = originalNoPowerColor;
         powerVisualiser.insufficientPowerColor = originalInsufficientPowerColor;
         
+        // Restore original status icon sprites
+        if (statusIndicator != null)
+        {
+            statusIndicator.warningSprite = originalWarningSprite;
+            statusIndicator.criticalSprite = originalCriticalSprite;
+            statusIndicator.goodSprite = originalGoodSprite;
+            
+            // Force update all consumers to refresh icons
+            statusIndicator.ForceRefreshAllIcons();
+        }
+        
         // Call method to force update lines
         ForceVisualiserUpdate();
     }
@@ -73,11 +106,36 @@ public class VisualDisruptionAttack : CyberAttackBase
             powerVisualiser.noPowerColor = GetRandomColor();
             powerVisualiser.insufficientPowerColor = GetRandomColor();
             
+            // Randomly shuffle status icons
+            if (statusIndicator != null)
+            {
+                ScrambleStatusIcons();
+            }
+            
             // Force update all existing connections
             ForceVisualiserUpdate();
             
             yield return new WaitForSeconds(visualDisruptionUpdateInterval);
         }
+    }
+    
+    private void ScrambleStatusIcons()
+    {
+        // Create an array of the available sprites
+        Sprite[] availableSprites = new Sprite[] 
+        {
+            originalWarningSprite,
+            originalCriticalSprite,
+            originalGoodSprite
+        };
+        
+        // Randomly assign sprites to different statuses
+        statusIndicator.warningSprite = availableSprites[Random.Range(0, availableSprites.Length)];
+        statusIndicator.criticalSprite = availableSprites[Random.Range(0, availableSprites.Length)];
+        statusIndicator.goodSprite = availableSprites[Random.Range(0, availableSprites.Length)];
+        
+        // Force refresh all icons
+        statusIndicator.ForceRefreshAllIcons();
     }
     
     private Color GetRandomColor()

@@ -51,6 +51,7 @@ public class CyberAttackManager : MonoBehaviour
         
         // Visual Disruption Attack
         VisualDisruptionAttack visualDisruptionAttack = gameObject.AddComponent<VisualDisruptionAttack>();
+        visualDisruptionAttack.SetPowerStatusIndicator(powerStatusIconManager);
         attacks.Add(visualDisruptionAttack.AttackName, visualDisruptionAttack);
         
         // Safety Override Attack

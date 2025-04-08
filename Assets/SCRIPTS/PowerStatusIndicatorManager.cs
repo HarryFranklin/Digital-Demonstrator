@@ -218,7 +218,7 @@ public class PowerStatusIndicatorManager : MonoBehaviour
         }
     }
 
-    public void RestartMonitoring()
+    public void RestartMonitoring() // Fixes issue with monitoring attack breaking the power status indicator
     {
         // Clear any existing state
         foreach (var consumer in consumers)
@@ -234,6 +234,35 @@ public class PowerStatusIndicatorManager : MonoBehaviour
         // Restart the monitoring coroutine
         StopAllCoroutines();
         StartCoroutine(CheckAllConsumersPowerStatus());
+    }
+
+    // Method for VisualDisruption attack
+    public void ForceRefreshAllIcons()
+    {
+        // Remove all current icons
+        foreach (var pair in consumerIcons)
+        {
+            Consumer consumer = pair.Key;
+            GameObject icon = pair.Value;
+            
+            if (icon != null)
+            {
+                Destroy(icon);
+            }
+        }
+        consumerIcons.Clear();
+        
+        // Force update all consumer statuses
+        foreach (var consumer in consumers)
+        {
+            if (consumer != null && consumer.isOperational)
+            {
+                float powerRatio = consumer.currentPower / consumer.GetPowerDemand();
+                PowerStatus currentStatus = GetStatusFromPowerRatio(powerRatio);
+                lastStatus[consumer] = currentStatus;
+                UpdateStatusIcon(consumer, currentStatus);
+            }
+        }
     }
 
     // Helper class to store the status of each icon

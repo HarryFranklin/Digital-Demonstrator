@@ -218,6 +218,24 @@ public class PowerStatusIndicatorManager : MonoBehaviour
         }
     }
 
+    public void RestartMonitoring()
+    {
+        // Clear any existing state
+        foreach (var consumer in consumers)
+        {
+            if (consumerIcons.ContainsKey(consumer))
+            {
+                Destroy(consumerIcons[consumer]);
+            }
+        }
+        consumerIcons.Clear();
+        lastStatus.Clear();
+        
+        // Restart the monitoring coroutine
+        StopAllCoroutines();
+        StartCoroutine(CheckAllConsumersPowerStatus());
+    }
+
     // Helper class to store the status of each icon
     private class IconStatus : MonoBehaviour
     {

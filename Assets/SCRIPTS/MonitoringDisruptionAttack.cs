@@ -50,6 +50,8 @@ public class MonitoringDisruptionAttack : CyberAttackBase
         if (powerStatusIndicator != null)
         {
             powerStatusIndicator.gameObject.SetActive(true);
+            // Restart the monitoring coroutine when re-activating
+            powerStatusIndicator.RestartMonitoring();
             Debug.Log("Re-enabled PowerStatusIndicatorManager after stopping monitoring disruption attack");
         }
     }

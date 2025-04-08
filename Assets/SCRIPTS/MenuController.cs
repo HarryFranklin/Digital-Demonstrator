@@ -95,10 +95,6 @@ public class MenuController : MonoBehaviour
         
         // Update state
         isPaused = false;
-        
-        // Optional: Hide cursor again if your game uses that
-        // Cursor.visible = false;
-        // Cursor.lockState = CursorLockMode.Locked;
     }
 
     // Function for the Play button

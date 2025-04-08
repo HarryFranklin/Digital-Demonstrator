@@ -17,37 +17,31 @@ public class PowerStatusIndicatorManager : MonoBehaviour
     [Header("Icon Sprites")]
     public Sprite warningSprite;    // Yellow "!" icon
     public Sprite criticalSprite;   // Red icon
-    public Sprite recoveredSprite;  // Green icon
+    public Sprite goodSprite;       // Green icon
 
     [Header("Power Status Thresholds")]
-    [Range(0f, 1f)] public float criticalPowerThreshold = 0.15f;  // 15% of required power
-    [Range(0f, 1f)] public float warningPowerThreshold = 0.65f;    // 65% of required power
+    [Range(0f, 1f)] public float criticalPowerThreshold = 0.25f;  // 0-24% of required power
+    [Range(0f, 1f)] public float warningPowerThreshold = 0.85f;    // 25-84% of required power
     
     [Header("Icon Settings")]
     public IconSettings iconSettings = new IconSettings();
     
+    [Header("Animation Settings")]
+    public float goodIconDuration = 1.5f;    // How long the green icon stays
+    public float fadeOutDuration = 1.5f;   // How long it takes to fade out
+    public float slideDistance = 75f;      // How far the icon slides up
+    
     [Header("General Settings")]
-    public float checkInterval = 0.5f;
+    public float checkInterval = 0.25f;
 
     // Reference to Canvas that will hold the icons
     public Canvas overlayCanvas;
     
     private Dictionary<Consumer, GameObject> consumerIcons = new Dictionary<Consumer, GameObject>();
+    private Dictionary<Consumer, PowerStatus> lastStatus = new Dictionary<Consumer, PowerStatus>();
 
     private void Awake()
     {
-        if (overlayCanvas == null)
-        {
-            overlayCanvas = transform.Find("Canvas")?.GetComponent<Canvas>(); // Find the child canvas if not set
-        }
-
-        // Ensure overlayCanvas is assigned
-        if (overlayCanvas == null)
-        {
-            Debug.LogError("No Canvas found for PowerStatusIndicatorManager.");
-            return;
-        }
-
         StartCoroutine(CheckAllConsumersPowerStatus());
     }
     
@@ -71,15 +65,36 @@ public class PowerStatusIndicatorManager : MonoBehaviour
         if (!consumer.isOperational) 
         {
             RemoveIcon(consumer);
+            lastStatus.Remove(consumer);
             return;
         }
 
         float powerRatio = consumer.currentPower / consumer.GetPowerDemand();
-        PowerStatus status = GetStatusFromPowerRatio(powerRatio);
-
-        if (!consumerIcons.ContainsKey(consumer) || status != consumerIcons[consumer].GetComponent<IconStatus>().currentStatus)
+        PowerStatus currentStatus = GetStatusFromPowerRatio(powerRatio);
+        
+        // Check if status has changed
+        if (!lastStatus.ContainsKey(consumer))
         {
-            UpdateStatusIcon(consumer, status);
+            // First time seeing this consumer
+            lastStatus[consumer] = currentStatus;
+            UpdateStatusIcon(consumer, currentStatus);
+        }
+        else if (lastStatus[consumer] != currentStatus)
+        {
+            // Status has changed
+            PowerStatus previousStatus = lastStatus[consumer];
+            lastStatus[consumer] = currentStatus;
+            
+            // If we're changing to "Good" from a worse state, show green recovery icon
+            if (currentStatus == PowerStatus.Good && 
+                (previousStatus == PowerStatus.Warning || previousStatus == PowerStatus.Critical))
+            {
+                UpdateStatusIcon(consumer, PowerStatus.Good, true);
+            }
+            else
+            {
+                UpdateStatusIcon(consumer, currentStatus);
+            }
         }
     }
 
@@ -87,10 +102,10 @@ public class PowerStatusIndicatorManager : MonoBehaviour
     {
         if (powerRatio < criticalPowerThreshold) return PowerStatus.Critical;
         if (powerRatio < warningPowerThreshold) return PowerStatus.Warning;
-        return PowerStatus.Normal;
+        return PowerStatus.Good;
     }
 
-    private void UpdateStatusIcon(Consumer consumer, PowerStatus status)
+    private void UpdateStatusIcon(Consumer consumer, PowerStatus status, bool animate = false)
     {
         // Remove the previous icon if it exists
         RemoveIcon(consumer);
@@ -106,15 +121,57 @@ public class PowerStatusIndicatorManager : MonoBehaviour
             image.rectTransform.sizeDelta = new Vector2(iconSettings.size * 100, iconSettings.size * 100);
             image.raycastTarget = false; // Don't need raycast for icons
             
-            icon.AddComponent<IconStatus>().currentStatus = status;  // Attach status to manage it
+            var iconStatus = icon.AddComponent<IconStatus>();
+            iconStatus.currentStatus = status;
 
             consumerIcons[consumer] = icon;
 
-            if (status == PowerStatus.Recovered)
+            // If this is a "Good" status and we want to animate it
+            if (status == PowerStatus.Good && animate)
             {
-                StartCoroutine(RemoveRecoveredIconAfterDelay(consumer, 3f));
+                StartCoroutine(AnimateGoodIcon(consumer, icon));
+            }
+            // If it's a "Good" status but not animated, just show temporarily
+            else if (status == PowerStatus.Good)
+            {
+                StartCoroutine(RemoveIconAfterDelay(consumer, goodIconDuration));
             }
         }
+    }
+
+    private IEnumerator AnimateGoodIcon(Consumer consumer, GameObject icon)
+    {
+        // Wait for the display duration
+        yield return new WaitForSeconds(goodIconDuration);
+        
+        // Get components for animation
+        var image = icon.GetComponent<UnityEngine.UI.Image>();
+        var rectTransform = icon.GetComponent<RectTransform>();
+        Vector3 startPosition = rectTransform.position;
+        Vector3 endPosition = startPosition + new Vector3(0, slideDistance, 0);
+        Color startColor = image.color;
+        Color endColor = new Color(startColor.r, startColor.g, startColor.b, 0);
+        
+        // Animate fade out and slide up
+        float elapsedTime = 0;
+        while (elapsedTime < fadeOutDuration)
+        {
+            float t = elapsedTime / fadeOutDuration;
+            
+            // Lerp color and position
+            image.color = Color.Lerp(startColor, endColor, t);
+            rectTransform.position = Vector3.Lerp(startPosition, endPosition, t);
+            
+            elapsedTime += Time.deltaTime;
+            yield return null;
+        }
+        
+        // Ensure we reach the final state
+        image.color = endColor;
+        rectTransform.position = endPosition;
+        
+        // Remove the icon
+        RemoveIcon(consumer);
     }
 
     private void RemoveIcon(Consumer consumer)
@@ -132,12 +189,12 @@ public class PowerStatusIndicatorManager : MonoBehaviour
         {
             case PowerStatus.Warning: return warningSprite;
             case PowerStatus.Critical: return criticalSprite;
-            case PowerStatus.Recovered: return recoveredSprite;
-            default: return null; // No icon for normal state
+            case PowerStatus.Good: return goodSprite;
+            default: return null;
         }
     }
 
-    private IEnumerator RemoveRecoveredIconAfterDelay(Consumer consumer, float delay)
+    private IEnumerator RemoveIconAfterDelay(Consumer consumer, float delay)
     {
         yield return new WaitForSeconds(delay);
         RemoveIcon(consumer);
@@ -145,14 +202,17 @@ public class PowerStatusIndicatorManager : MonoBehaviour
 
     private void LateUpdate()
     {
-        foreach (var consumer in consumerIcons)
+        foreach (var pair in consumerIcons)
         {
-            if (consumer.Value != null)
+            Consumer consumer = pair.Key;
+            GameObject icon = pair.Value;
+            
+            if (consumer != null && icon != null)
             {
-                Vector3 worldPos = consumer.Key.transform.position + iconSettings.offset;
+                Vector3 worldPos = consumer.transform.position + iconSettings.offset;
                 Vector3 screenPos = Camera.main.WorldToScreenPoint(worldPos);
 
-                RectTransform rectTransform = consumer.Value.GetComponent<RectTransform>();
+                RectTransform rectTransform = icon.GetComponent<RectTransform>();
                 rectTransform.position = new Vector3(screenPos.x, screenPos.y, 0);
             }
         }
@@ -166,9 +226,8 @@ public class PowerStatusIndicatorManager : MonoBehaviour
 
     private enum PowerStatus
     {
-        Normal,
+        Good,
         Warning,
-        Critical,
-        Recovered
+        Critical
     }
 }

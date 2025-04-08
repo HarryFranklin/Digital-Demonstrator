@@ -4,14 +4,37 @@ using UnityEngine;
 
 public class PowerGrid : PowerComponentBase
 {
+    [System.Serializable]
+    public class PrioritisedConsumer
+    {
+        public Consumer consumer;
+        public string description;
+    }
+    
+    [Header("Consumer Priorities")]
+    [Tooltip("Add consumers in priority order. First consumer (index 0) has highest priority.")]
+    public List<PrioritisedConsumer> prioritisedConsumers = new List<PrioritisedConsumer>();
+    
     private List<Consumer> connectedConsumers = new List<Consumer>();
     private Dictionary<IPowerComponent, float> powerSources = new Dictionary<IPowerComponent, float>();
     private float totalAvailablePower = 0f;
+    private float lastTotalPower = 0f;
+    private bool needsRecalculation = true;
+    
+    [Header("Debug")]
+    public bool showPowerDistributionDebug = true;
     
     protected override void Awake()
     {
         base.Awake();
         StartCoroutine(UpdateVisualisationRoutine(0.1f));
+        
+        // Add prioritised consumers to connected list
+        foreach (var pc in prioritisedConsumers)
+        {
+            if (pc.consumer != null && !connectedConsumers.Contains(pc.consumer))
+                connectedConsumers.Add(pc.consumer);
+        }
     }
     
     void Update()
@@ -19,87 +42,141 @@ public class PowerGrid : PowerComponentBase
         if (!isOperational)
         {
             currentPower = 0f;
+            needsRecalculation = true;
             return;
         }
         
-        // Sum up all available power
         currentPower = totalAvailablePower;
         
-        // Distribute power to consumers
-        DistributePower();
+        if (Mathf.Abs(lastTotalPower - currentPower) > 0.01f || needsRecalculation)
+        {
+            DistributePowerByPriority();
+            lastTotalPower = currentPower;
+            needsRecalculation = false;
+            
+            if (showPowerDistributionDebug)
+                Debug.Log($"Power distribution recalculated. Total Power: {currentPower}");
+        }
         
-        // Reset available power for next frame
         totalAvailablePower = 0f;
         powerSources.Clear();
     }
     
-    // Register a consumer
     public void RegisterConsumer(Consumer consumer)
     {
         if (!connectedConsumers.Contains(consumer))
         {
             connectedConsumers.Add(consumer);
+            
+            // Auto-add to prioritised consumers if not already there
+            if (!IsPrioritised(consumer))
+            {
+                prioritisedConsumers.Add(new PrioritisedConsumer { 
+                    consumer = consumer,
+                    description = "Auto-added"
+                });
+            }
+            
+            needsRecalculation = true;
         }
     }
     
-    // Unregister a consumer
-    public void UnregisterConsumer(Consumer consumer)
+    private bool IsPrioritised(Consumer consumer) => 
+        prioritisedConsumers.Exists(pc => pc.consumer == consumer);
+    
+    private int GetPriorityIndex(Consumer consumer)
     {
-        connectedConsumers.Remove(consumer);
+        for (int i = 0; i < prioritisedConsumers.Count; i++)
+        {
+            if (prioritisedConsumers[i].consumer == consumer) 
+                return i;
+        }
+        return -1;
     }
     
-    // Receive power from a source (transformer or battery)
+    public void UnregisterConsumer(Consumer consumer)
+    {
+        if (connectedConsumers.Remove(consumer))
+        {
+            // Remove from prioritised list
+            prioritisedConsumers.RemoveAll(pc => pc.consumer == consumer);
+            needsRecalculation = true;
+        }
+    }
+    
     public void ReceivePower(IPowerComponent source, float power)
     {
         powerSources[source] = power;
         totalAvailablePower += power;
+        
+        if (Mathf.Abs(totalAvailablePower - lastTotalPower) > 0.01f)
+            needsRecalculation = true;
     }
     
-    // Get total power demand from all consumers
     public float GetTotalDemand()
     {
         float totalDemand = 0f;
         foreach (var consumer in connectedConsumers)
         {
             if (consumer != null && consumer.IsOperational())
-            {
                 totalDemand += consumer.GetPowerDemand();
-            }
         }
         return totalDemand;
     }
     
-    // Distribute available power to consumers
-    private void DistributePower()
+    private void DistributePowerByPriority()
     {
-        float totalDemand = GetTotalDemand();
+        if (connectedConsumers.Count == 0) return;
         
-        // If no consumers or no demand, nothing to do
-        if (connectedConsumers.Count == 0 || totalDemand <= 0) return;
+        // Sort consumers by priority
+        List<Consumer> sortedConsumers = new List<Consumer>(connectedConsumers);
+        sortedConsumers.Sort((a, b) => {
+            int indexA = GetPriorityIndex(a);
+            int indexB = GetPriorityIndex(b);
+            
+            if (indexA >= 0 && indexB >= 0)
+                return indexA.CompareTo(indexB);
+            else if (indexA >= 0)
+                return -1;
+            else if (indexB >= 0)
+                return 1;
+            
+            return 0;
+        });
         
-        // If enough power, give each consumer what they need
-        if (currentPower >= totalDemand)
+        float remainingPower = currentPower;
+        
+        // Reset all consumers' power
+        foreach (var consumer in connectedConsumers)
         {
-            foreach (var consumer in connectedConsumers)
-            {
-                if (consumer != null && consumer.IsOperational())
-                {
-                    consumer.ReceivePower(consumer.GetPowerDemand());
-                }
-            }
+            if (consumer != null)
+                consumer.ReceivePower(0f);
         }
-        // Otherwise, distribute proportionally
-        else
+        
+        // Distribute by priority order
+        foreach (var consumer in sortedConsumers)
         {
-            float ratio = currentPower / totalDemand;
-            foreach (var consumer in connectedConsumers)
+            if (consumer == null || !consumer.IsOperational())
+                continue;
+                
+            float demand = consumer.GetPowerDemand();
+            int priorityIndex = GetPriorityIndex(consumer);
+            string priorityDesc = (priorityIndex >= 0) ? 
+                $"Priority: {priorityIndex} ({prioritisedConsumers[priorityIndex].description})" : 
+                "Unregistered";
+            
+            float allocated = Mathf.Min(demand, remainingPower);
+            consumer.ReceivePower(allocated);
+            remainingPower -= allocated;
+            
+            if (showPowerDistributionDebug)
             {
-                if (consumer != null && consumer.IsOperational())
-                {
-                    float allocation = consumer.GetPowerDemand() * ratio;
-                    consumer.ReceivePower(allocation);
-                }
+                string status = allocated >= demand ? "full" : (allocated > 0 ? "partial" : "no");
+                Debug.Log($"Consumer {consumer.gameObject.name} ({priorityDesc}) received {status} power: {allocated} of {demand} needed");
             }
+            
+            if (remainingPower <= 0)
+                break;
         }
     }
     
@@ -107,37 +184,24 @@ public class PowerGrid : PowerComponentBase
     {
         if (visualiser == null) return;
         
-        // Visualise connections from sources (transformer, battery)
+        // Visualise source connections
         foreach (var source in powerSources.Keys)
         {
             if (source is MonoBehaviour mb)
-            {
                 visualiser.CreateOrUpdateConnection(mb.gameObject, gameObject, powerSources[source]);
-            }
         }
         
-        // Visualise connections to consumers
+        // Visualise consumer connections
         foreach (var consumer in connectedConsumers)
         {
             if (consumer != null)
             {
-                float allocatedPower = 0;
-                float requiredPower = consumer.GetPowerDemand();
-                
-                // Calculate actual power sent to this consumer
-                if (GetTotalDemand() > 0)
-                {
-                    if (currentPower >= GetTotalDemand())
-                    {
-                        allocatedPower = requiredPower;
-                    }
-                    else
-                    {
-                        allocatedPower = requiredPower * (currentPower / GetTotalDemand());
-                    }
-                }
-                
-                visualiser.CreateOrUpdateConnection(gameObject, consumer.gameObject, allocatedPower, requiredPower);
+                visualiser.CreateOrUpdateConnection(
+                    gameObject, 
+                    consumer.gameObject, 
+                    consumer.GetCurrentPower(), 
+                    consumer.GetPowerDemand()
+                );
             }
         }
     }

@@ -33,6 +33,7 @@ public class PowerStatusIndicatorManager : MonoBehaviour
     
     [Header("General Settings")]
     public float checkInterval = 0.25f;
+    public bool debugStatusChanges = true;
 
     // Reference to Canvas that will hold the icons
     public Canvas overlayCanvas;
@@ -42,13 +43,42 @@ public class PowerStatusIndicatorManager : MonoBehaviour
 
     private void Awake()
     {
+        // Register with existing consumers
+        foreach (var consumer in consumers)
+        {
+            if (consumer != null)
+            {
+                RegisterConsumer(consumer);
+            }
+        }
+        
         StartCoroutine(CheckAllConsumersPowerStatus());
+    }
+    
+    private void RegisterConsumer(Consumer consumer)
+    {
+        // Subscribe to power status changes
+        consumer.OnPowerStatusChanged += (ratio) => OnConsumerPowerChanged(consumer, ratio);
+        
+        // Initialize status
+        UpdateConsumerStatus(consumer);
+    }
+    
+    private void OnConsumerPowerChanged(Consumer consumer, float powerRatio)
+    {
+        if (debugStatusChanges)
+        {
+            Debug.Log($"Power changed for {consumer.gameObject.name}: {powerRatio:P0} of required power");
+        }
+        
+        UpdateConsumerStatus(consumer);
     }
     
     private IEnumerator CheckAllConsumersPowerStatus()
     {
         while (true)
         {
+            // This is now a backup check in case the event system missed something
             foreach (var consumer in consumers)
             {
                 if (consumer != null)
@@ -85,6 +115,11 @@ public class PowerStatusIndicatorManager : MonoBehaviour
             PowerStatus previousStatus = lastStatus[consumer];
             lastStatus[consumer] = currentStatus;
             
+            if (debugStatusChanges)
+            {
+                Debug.Log($"Status changed for {consumer.gameObject.name}: {previousStatus} -> {currentStatus}");
+            }
+            
             // If we're changing to "Good" from a worse state, show green recovery icon
             if (currentStatus == PowerStatus.Good && 
                 (previousStatus == PowerStatus.Warning || previousStatus == PowerStatus.Critical))
@@ -113,7 +148,9 @@ public class PowerStatusIndicatorManager : MonoBehaviour
         Sprite iconSprite = GetIconSprite(status);
         if (iconSprite != null)
         {
-            GameObject icon = new GameObject($"StatusIcon_{consumer.name}");
+            // Create a unique name for this icon
+            string iconName = $"StatusIcon_{consumer.gameObject.name}_{consumer.GetInstanceID()}";
+            GameObject icon = new GameObject(iconName);
             icon.transform.SetParent(overlayCanvas.transform, false);
 
             var image = icon.AddComponent<UnityEngine.UI.Image>();
@@ -218,6 +255,42 @@ public class PowerStatusIndicatorManager : MonoBehaviour
         }
     }
 
+    // Public method to force refresh all icons - used for attacks
+    public void ForceRefreshAllIcons()
+    {
+        // Clear all existing icons
+        foreach (var pair in consumerIcons)
+        {
+            if (pair.Value != null)
+            {
+                Destroy(pair.Value);
+            }
+        }
+        consumerIcons.Clear();
+        
+        // Reset last status cache to force re-evaluation
+        lastStatus.Clear();
+        
+        // Re-evaluate all consumers
+        foreach (var consumer in consumers)
+        {
+            if (consumer != null && consumer.isOperational)
+            {
+                float powerRatio = consumer.currentPower / consumer.GetPowerDemand();
+                PowerStatus status = GetStatusFromPowerRatio(powerRatio);
+                UpdateStatusIcon(consumer, status);
+                lastStatus[consumer] = status;
+                
+                if (debugStatusChanges)
+                {
+                    Debug.Log($"Force refreshed icon for {consumer.gameObject.name}: {status}");
+                }
+            }
+        }
+        
+        Debug.Log("All power status icons have been forcibly refreshed");
+    }
+
     public void RestartMonitoring() // Fixes issue with monitoring attack breaking the power status indicator
     {
         // Clear any existing state
@@ -234,35 +307,6 @@ public class PowerStatusIndicatorManager : MonoBehaviour
         // Restart the monitoring coroutine
         StopAllCoroutines();
         StartCoroutine(CheckAllConsumersPowerStatus());
-    }
-
-    // Method for VisualDisruption attack
-    public void ForceRefreshAllIcons()
-    {
-        // Remove all current icons
-        foreach (var pair in consumerIcons)
-        {
-            Consumer consumer = pair.Key;
-            GameObject icon = pair.Value;
-            
-            if (icon != null)
-            {
-                Destroy(icon);
-            }
-        }
-        consumerIcons.Clear();
-        
-        // Force update all consumer statuses
-        foreach (var consumer in consumers)
-        {
-            if (consumer != null && consumer.isOperational)
-            {
-                float powerRatio = consumer.currentPower / consumer.GetPowerDemand();
-                PowerStatus currentStatus = GetStatusFromPowerRatio(powerRatio);
-                lastStatus[consumer] = currentStatus;
-                UpdateStatusIcon(consumer, currentStatus);
-            }
-        }
     }
 
     // Helper class to store the status of each icon

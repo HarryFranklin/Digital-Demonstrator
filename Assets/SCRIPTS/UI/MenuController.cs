@@ -11,6 +11,7 @@ public class MenuController : MonoBehaviour
     [Header("Gameplay UI Elements")]
     [SerializeField] private GameObject attacksPanel;
     [SerializeField] private GameObject moneyUIPanel;
+    [SerializeField] private GameObject controlPanelPanel;
     
     // Track pause state
     private bool isPaused = false;
@@ -18,16 +19,19 @@ public class MenuController : MonoBehaviour
 
     private void Start()
     {
-        // Initialize pause menu as hidden
+        // Initialise pause menu as hidden
         if (pauseMenuPanel != null)
             pauseMenuPanel.SetActive(false);
             
-        // Initialize gameplay UI elements as visible
+        // Initialise gameplay UI elements as visible
         if (attacksPanel != null)
             attacksPanel.SetActive(true);
             
         if (moneyUIPanel != null)
             moneyUIPanel.SetActive(true);
+
+        if (controlPanelPanel != null)
+            controlPanelPanel.SetActive(true);
     }
 
     private void Update()
@@ -68,6 +72,10 @@ public class MenuController : MonoBehaviour
         if (moneyUIPanel != null)
             moneyUIPanel.SetActive(false);
         
+        if (controlPanelPanel != null)
+            controlPanelPanel.SetActive(false);
+
+
         // Update state
         isPaused = true;
         
@@ -92,6 +100,9 @@ public class MenuController : MonoBehaviour
             
         if (moneyUIPanel != null)
             moneyUIPanel.SetActive(true);
+
+        if (controlPanelPanel != null)
+            controlPanelPanel.SetActive(true);
         
         // Update state
         isPaused = false;
@@ -163,5 +174,8 @@ public class MenuController : MonoBehaviour
             
         if (moneyUIPanel != null)
             moneyUIPanel.SetActive(visible);
+
+        if (controlPanelPanel != null)
+            controlPanelPanel.SetActive(visible);
     }
 }

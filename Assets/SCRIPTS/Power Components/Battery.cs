@@ -8,10 +8,13 @@ public class Battery : PowerComponentBase
     // I/O
     public PowerGrid outputGrid;
     
-    public float maxCapacity;
+    public float maxCapacity = 10000f; // Maximum energy storage capacity
     public float currentCharge = 0f;
-    public float chargeEfficiency = 0.9f; // Energy stored vs energy received
-    public float dischargeEfficiency = 0.95f; // Energy output vs energy used from storage
+
+    // Energy stored vs energy received
+    public float chargeEfficiency = 0.9f; 
+    // Energy output vs energy used from storage
+    public float dischargeEfficiency = 0.95f; 
     
     private float dischargeAmount = 0f;
     
@@ -66,7 +69,7 @@ public class Battery : PowerComponentBase
         float actualCharge = Mathf.Min(excessPower * chargeEfficiency, spaceAvailable);
         currentCharge += actualCharge;
         
-        // If battery is full and still receiving power, log message
+        // If battery is full and still receiving power, log message - add functionality later
         if (currentCharge >= maxCapacity * 0.99f && excessPower > 0)
         {
             Debug.Log("Battery is full! Consider reducing turbine output to prevent power overflow.");

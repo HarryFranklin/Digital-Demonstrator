@@ -41,7 +41,7 @@ public class Turbine : PowerComponentBase
             RotateBlades(0f);
         }
         
-        // Send power to wind farm - moved outside the if/else blocks
+        // Send power to wind farm
         if (outputWindFarm != null)
         {
             outputWindFarm.ReceivePower(this, currentPower);

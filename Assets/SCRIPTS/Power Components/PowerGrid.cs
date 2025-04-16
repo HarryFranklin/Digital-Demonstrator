@@ -134,6 +134,7 @@ public class PowerGrid : PowerComponentBase
             int indexA = GetPriorityIndex(a);
             int indexB = GetPriorityIndex(b);
             
+            // Sorting
             if (indexA >= 0 && indexB >= 0)
                 return indexA.CompareTo(indexB);
             else if (indexA >= 0)
@@ -156,15 +157,18 @@ public class PowerGrid : PowerComponentBase
         // Distribute by priority order
         foreach (var consumer in sortedConsumers)
         {
+            // Sanity check
             if (consumer == null || !consumer.IsOperational())
                 continue;
                 
+            // Get consumer demand and consumer priority index
             float demand = consumer.GetPowerDemand();
             int priorityIndex = GetPriorityIndex(consumer);
             string priorityDesc = (priorityIndex >= 0) ? 
                 $"Priority: {priorityIndex} ({prioritisedConsumers[priorityIndex].description})" : 
                 "Unregistered";
             
+            // Give the consumer as little as it needs to meet demand, rather than an equal share
             float allocated = Mathf.Min(demand, remainingPower);
             consumer.ReceivePower(allocated);
             remainingPower -= allocated;

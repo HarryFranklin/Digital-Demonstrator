@@ -7,6 +7,7 @@ public class VisualiserManager : MonoBehaviour
     [SerializeField] private PowerVisualiser powerVisualiser;
 
     [Header("Scene References")]
+    // Change object types
     public GameObject windFarm;
     public GameObject inverter;
     public GameObject transformer;
@@ -41,6 +42,8 @@ public class VisualiserManager : MonoBehaviour
 
         // Stage 2: Wind Farm to Inverter to Transformer
         var farmPower = GetPowerFromFarm();
+
+        // Use power from farm to pass to inverter and transformer
         var stage2 = new List<(GameObject from, GameObject to, float power, float requiredPower)>
         {
             (windFarm, inverter, farmPower, 0),
@@ -48,7 +51,7 @@ public class VisualiserManager : MonoBehaviour
         };
 
         // Stage 3: Transformer to Grid / Battery and Battery to Grid
-        var transformerPower = farmPower; // You can replace this with actual transformer output
+        var transformerPower = farmPower; // Replace later with actual transformer output
         var batteryPower = GetBatteryOutput();
 
         var stage3 = new List<(GameObject from, GameObject to, float power, float requiredPower)>

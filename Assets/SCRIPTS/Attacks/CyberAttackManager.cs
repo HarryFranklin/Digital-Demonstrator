@@ -138,7 +138,7 @@ public class CyberAttackManager : MonoBehaviour
         Debug.Log("Cyber Attacks " + (engageAttacks ? "Enabled" : "Disabled"));
         UpdateLockButtons();
 
-        // Optionally, you could deactivate all attacks when disengaging
+        // Optionally, could deactivate all attacks when disengaging
         if (!engageAttacks)
         {
             foreach (var attack in attacks.Values)

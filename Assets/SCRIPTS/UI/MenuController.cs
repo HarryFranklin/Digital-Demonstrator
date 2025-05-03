@@ -65,7 +65,7 @@ public class MenuController : MonoBehaviour
         if (pauseMenuPanel != null)
             pauseMenuPanel.SetActive(true);
             
-        // Hide gameplay UI elements
+        // Hide gameplay UI elements - known bug - this doesn't work
         if (attacksPanel != null)
             attacksPanel.SetActive(false);
             
